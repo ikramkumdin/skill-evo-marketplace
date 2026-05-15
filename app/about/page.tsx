@@ -44,24 +44,6 @@ export default function AboutPage() {
         </p>
       </section>
 
-      <section className="mt-10">
-        <h2 className="text-xl font-semibold text-zinc-950 dark:text-zinc-50">Roadmap</h2>
-        <ul className="mt-3 space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
-          <li>
-            <strong>Live:</strong> browse, publish, GitHub sign-in, install counter, favorites,
-            upvotes / downvotes, star ratings
-          </li>
-          <li>
-            <strong>Next:</strong> threaded comments, user profile pages, three-state Skill labels
-            (Want to Use / Currently Using / Abandoned)
-          </li>
-          <li>
-            <strong>Later:</strong> Skill selling with virtual points, verified-usage badge on
-            reviews, agent reputation surface
-          </li>
-        </ul>
-      </section>
-
       <div className="mt-12 rounded-xl border border-zinc-200 bg-zinc-50 p-6 dark:border-zinc-800 dark:bg-zinc-950">
         <p className="text-sm text-zinc-700 dark:text-zinc-300">
           Want to publish your first Skill?
