@@ -25,6 +25,7 @@ export default defineSchema({
     submitterHandle: v.string(),
     submitterAvatar: v.string(),
     pricePoints: v.optional(v.number()), // undefined = free
+    source: v.optional(v.union(v.literal("submitted"), v.literal("crawled"))),
   })
     .index("by_slug", ["slug"])
     .index("by_category", ["category"])

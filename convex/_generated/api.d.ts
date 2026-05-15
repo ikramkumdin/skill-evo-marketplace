@@ -11,6 +11,7 @@
 import type * as agentAuth from "../agentAuth.js";
 import type * as auth from "../auth.js";
 import type * as comments from "../comments.js";
+import type * as crawl from "../crawl.js";
 import type * as http from "../http.js";
 import type * as labels from "../labels.js";
 import type * as points from "../points.js";
@@ -29,6 +30,7 @@ declare const fullApi: ApiFromModules<{
   agentAuth: typeof agentAuth;
   auth: typeof auth;
   comments: typeof comments;
+  crawl: typeof crawl;
   http: typeof http;
   labels: typeof labels;
   points: typeof points;

@@ -29,6 +29,7 @@ export type DisplaySkill = {
   ratingCount: number;
   featured?: boolean;
   pricePoints?: number; // undefined = free
+  source?: "submitted" | "crawled";
   author: { handle: string; avatar: string };
   createdAt: string;
   updatedAt: string;
@@ -72,6 +73,7 @@ type ConvexSkillDoc = {
   ratingCount: number;
   featured?: boolean;
   pricePoints?: number;
+  source?: "submitted" | "crawled";
   submitterHandle: string;
   submitterAvatar: string;
 };
@@ -94,6 +96,7 @@ function convexToDisplay(s: ConvexSkillDoc): DisplaySkill {
     ratingCount: s.ratingCount,
     featured: s.featured,
     pricePoints: s.pricePoints,
+    source: s.source,
     author: { handle: s.submitterHandle, avatar: s.submitterAvatar },
     createdAt: date,
     updatedAt: date,

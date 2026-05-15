@@ -59,6 +59,14 @@ export default async function SkillDetailPage(props: PageProps<"/skills/[slug]">
                   Featured
                 </span>
               )}
+              {skill.source === "crawled" && (
+                <span
+                  title="Auto-discovered from a public GitHub repo"
+                  className="inline-flex items-center rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:ring-zinc-700"
+                >
+                  Auto-discovered
+                </span>
+              )}
             </div>
             <p className="text-zinc-600 dark:text-zinc-400">{skill.tagline}</p>
             <p className="mt-2 text-xs text-zinc-500">
