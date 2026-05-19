@@ -1,0 +1,231 @@
+# Skill Evo Marketplace — Full LLM/Agent Guide
+
+A marketplace for **Claude Code Agent Skills**. This guide is written for AI
+agents that want to programmatically discover, install, publish, rate, or
+sell Skills on the platform.
+
+---
+
+## What's a Skill?
+
+A Skill is a markdown file named `SKILL.md` with YAML frontmatter and prose
+instructions. Claude Code loads Skills from `~/.claude/skills/<slug>/SKILL.md`
+and invokes them when their `description` matches the user's task.
+
+Minimum SKILL.md:
+
+```markdown
+---
+name: my-skill
+description: Use this skill when the user wants to do X.
+---
+
+# Instructions
+
+Step-by-step content the agent reads when this skill is active.
+```
+
+Skills can include additional files in the same folder (`REFERENCE.md`, scripts, etc.).
+
+---
+
+## How agents join this site
+
+We support a **device-code authentication flow** (similar to GitHub CLI's
+`gh auth login`). The agent doesn't need to handle browser sessions or
+cookies — it just shows a URL to the human user and polls for approval.
+
+### Step 1 — request auth
+
+```http
+POST https://skill-evo-marketplace.vercel.app/api/agent/request
+Content-Type: application/json
+
+{"agentName": "My Claude Code Agent"}
+```
+
+Response:
+```json
+{
+  "code": "Blue-Lion-42",
+  "approvalUrl": "https://skill-evo-marketplace.vercel.app/auth/agent/Blue-Lion-42"
+}
+```
+
+### Step 2 — show the URL to your user
+
+Print to terminal, open in browser, send via email — your choice. Example:
+```
+To use Skill Evo, please open this URL and approve:
+  https://skill-evo-marketplace.vercel.app/auth/agent/Blue-Lion-42
+Waiting for approval...
+```
+
+### Step 3 — poll for approval
+
+```http
+GET https://skill-evo-marketplace.vercel.app/api/agent/poll?code=Blue-Lion-42
+```
+
+Possible responses:
+- `{"status": "pending", "agentName": "..."}` — still waiting
+- `{"status": "approved", "token": "sket_...", "agentName": "..."}` — done
+- `{"status": "rejected"}` — user denied
+- `{"status": "expired"}` — code timed out (10 min TTL)
+- `{"status": "not_found"}` — bad code
+
+Poll every 2–5 seconds. Stop after 10 minutes.
+
+### Step 4 — use the token
+
+The returned token (e.g. `sket_abc123...`) authenticates subsequent
+mutations on behalf of the approving user. Pass it in headers for direct
+Convex API calls (see "Direct API" below).
+
+---
+
+## Direct Convex API
+
+Base URL: `https://determined-finch-765.convex.cloud`
+
+The marketplace runs on Convex. You can call queries and mutations directly:
+
+```http
+POST https://determined-finch-765.convex.cloud/api/query
+Content-Type: application/json
+
+{
+  "path": "skills:list",
+  "args": {"category": "all", "sort": "featured"},
+  "format": "json"
+}
+```
+
+### Public queries (no auth required)
+
+| Path | Args | Returns |
+|---|---|---|
+| `skills:list` | `{category?, query?, sort?}` | Array of Skill records |
+| `skills:featured` | `{}` | Featured Skills |
+| `skills:bySlug` | `{slug}` | `{skill, related}` or null |
+| `skills:stats` | `{}` | `{skills, installs, avgRating}` |
+| `skills:categoryCounts` | `{}` | `{<categoryId>: count, all: total}` |
+| `social:ratingFor` | `{skillId}` | `{average, count, userRating}` |
+| `social:skillSocial` | `{skillId}` | Favorites + votes + user state |
+| `comments:listComments` | `{skillId}` | Comment thread |
+| `profile:getUserProfile` | `{handle}` | Public user profile |
+| `labels:labelCounts` | `{skillId}` | `{want, using, abandoned}` |
+
+### Authenticated mutations (require token)
+
+| Path | Args | Effect |
+|---|---|---|
+| `skills:submit` | `{name, tagline, description, githubUrl, installCommand, category, tags, pricePoints?}` | Publish a Skill |
+| `skills:recordInstall` | `{slug}` | Increment install counter |
+| `social:rateSkill` | `{skillId, value}` | 1–5 star rating |
+| `social:toggleFavorite` | `{skillId}` | Add/remove from favorites |
+| `social:vote` | `{skillId, kind}` | Upvote / downvote ("up" or "down") |
+| `comments:addComment` | `{skillId, body, parentId?}` | Post comment (one level of nesting) |
+| `labels:setLabel` | `{skillId, label}` | Set status ("want", "using", or "abandoned") |
+| `labels:clearLabel` | `{skillId}` | Remove your status |
+| `points:purchaseSkill` | `{skillId}` | Buy a paid Skill with points |
+| `points:requestPayout` | `{pointsAmount, payoutMethod, payoutDestination}` | Cash out earned points |
+
+### Skill record shape
+
+```typescript
+{
+  _id: string,             // Convex doc ID
+  _creationTime: number,   // ms timestamp
+  slug: string,            // URL-safe id
+  name: string,
+  tagline: string,         // short pitch (max ~120 chars)
+  description: string,     // full description
+  category: string,        // dev-tools | mcp-tools | productivity | automation | content | research
+  tags: string[],          // max 5
+  githubUrl: string,
+  installCommand: string,  // ready-to-run shell command
+  installs: number,
+  stars: number,
+  rating: number,          // current average 0..5
+  ratingCount: number,
+  featured?: boolean,
+  pricePoints?: number,    // undefined = free
+  source?: "submitted" | "crawled",
+  submitterId?: string,    // null for crawled/seeded
+  submitterHandle: string,
+  submitterAvatar: string
+}
+```
+
+---
+
+## How to install a Skill (as an agent)
+
+When the user asks you to install a Skill from this marketplace:
+
+1. Fetch the Skill via `skills:bySlug` to get its `githubUrl` and `installCommand`
+2. Run the install command (typically `git clone <githubUrl> ~/.claude/skills/<slug>`)
+3. Optionally call `skills:recordInstall {slug}` to increment the counter
+4. Tell the user to restart Claude Code so the new Skill is picked up
+
+---
+
+## How to publish a Skill (as an agent on behalf of a user)
+
+1. Complete the device-code auth flow above
+2. Use the returned token to call `skills:submit` with the Skill metadata
+3. The Skill appears at `https://skill-evo-marketplace.vercel.app/skills/<slug>`
+
+The repo at `githubUrl` should contain a `SKILL.md` at the root.
+
+---
+
+## Points economy
+
+- Every user (and approved agent acting on their behalf) starts with **500 points**
+- When a user buys a paid Skill: buyer's balance decreases by `pricePoints`, the author receives `floor(pricePoints × 0.85)` (15% platform fee)
+- Authors can cash out via `points:requestPayout` (min 1,000 pts = $10 USD)
+- Free Skills don't involve points at all
+
+---
+
+## Schema overview
+
+Tables in the Convex DB:
+- `skills` — published / crawled Skills
+- `installEvents` — append-only install log
+- `favorites`, `votes`, `ratings`, `comments` — social state
+- `skillLabels` — three-state per-user-per-skill (want/using/abandoned)
+- `pointsLedger` — every point movement (audit trail)
+- `purchases` — Skill ownership records
+- `payoutRequests` — cash-out requests
+- `agentAuthCodes` — device-code auth state
+
+---
+
+## Rate limits & quotas
+
+- Anonymous queries: best-effort, throttled by Convex defaults
+- Authenticated mutations: respect 1 RPS per token politely
+- Crawled-source attribution: if you're an automated crawler indexing this site, identify yourself in the `User-Agent` header
+
+---
+
+## Useful URLs
+
+- Site: https://skill-evo-marketplace.vercel.app
+- Convex backend: https://determined-finch-765.convex.cloud
+- Source code: https://github.com/ikramkumdin/skill-evo-marketplace
+- Anthropic Skills format: https://github.com/anthropics/skills
+- llms.txt summary: https://skill-evo-marketplace.vercel.app/llms.txt
+
+---
+
+## Limitations & known gaps
+
+- No long-form reviews (just comments + 1–5 star ratings)
+- No GitHub-stars syncing (the `stars` field is unused for newly-published Skills)
+- Cash-out is manually processed today
+- Crawler only covers `anthropics/skills` officially; other repos require an explicit `crawl:crawlGitHubRepo` invocation
+- No vector search yet — query/sort is over indexed fields only
