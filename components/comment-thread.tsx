@@ -5,6 +5,7 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { SignInButtons } from "@/components/sign-in-buttons";
 
 const isConvexConfigured = Boolean(process.env.NEXT_PUBLIC_CONVEX_URL);
 
@@ -237,15 +238,12 @@ function CommentForm({
         <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
           Sign in to join the conversation
         </p>
-        <p className="mt-1 text-xs text-zinc-500">
+        <p className="mt-1 text-xs text-zinc-500 mb-4">
           Share your experience, ask questions, or leave feedback.
         </p>
-        <button
-          onClick={onSignIn}
-          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900"
-        >
-          Sign in with GitHub
-        </button>
+        <div className="mx-auto max-w-xs">
+          <SignInButtons size="sm" />
+        </div>
       </div>
     );
   }

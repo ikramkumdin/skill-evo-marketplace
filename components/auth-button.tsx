@@ -5,6 +5,7 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { useConvexAuth, useQuery } from "convex/react";
 import { useState } from "react";
 import { api } from "@/convex/_generated/api";
+import { SignInButtons } from "@/components/sign-in-buttons";
 
 const isConvexConfigured = Boolean(process.env.NEXT_PUBLIC_CONVEX_URL);
 
@@ -92,22 +93,23 @@ function ConnectedAuthButton() {
   }
 
   return (
-    <button
-      type="button"
-      disabled={busy}
-      onClick={async () => {
-        setBusy(true);
-        try {
-          await signIn("github", { redirectTo: "/" });
-        } finally {
-          setBusy(false);
-        }
-      }}
-      className="hidden sm:inline-flex h-8 items-center gap-1.5 rounded-full border border-zinc-200 px-3 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-900"
-    >
-      <GitHubIcon />
-      {busy ? "Signing in..." : "Sign in"}
-    </button>
+    <div className="relative hidden sm:block">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex h-8 items-center gap-1.5 rounded-full border border-zinc-200 px-3 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-900"
+      >
+        Sign in ▾
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-10 z-20 w-56 rounded-xl border border-zinc-200 bg-white p-2 shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
+            <SignInButtons size="sm" />
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 

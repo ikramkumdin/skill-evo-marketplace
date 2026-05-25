@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
-import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "@/convex/_generated/api";
+import { SignInButtons } from "@/components/sign-in-buttons";
 
 const isConvexConfigured = Boolean(process.env.NEXT_PUBLIC_CONVEX_URL);
 
@@ -21,7 +21,6 @@ export function CashoutClient() {
 
 function Connected() {
   const { isAuthenticated } = useConvexAuth();
-  const { signIn } = useAuthActions();
   const info = useQuery(api.points.payoutInfo);
   const payouts = useQuery(api.points.myPayouts) ?? [];
   const requestPayout = useMutation(api.points.requestPayout);
@@ -37,15 +36,12 @@ function Connected() {
     return (
       <div className="rounded-xl border border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-900">
         <p className="text-3xl mb-2">💰</p>
-        <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-4">
           Sign in to cash out your points
         </p>
-        <button
-          onClick={() => signIn("github", { redirectTo: "/points/cashout" })}
-          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900"
-        >
-          Sign in with GitHub
-        </button>
+        <div className="mx-auto max-w-xs">
+          <SignInButtons redirectTo="/points/cashout" />
+        </div>
       </div>
     );
   }

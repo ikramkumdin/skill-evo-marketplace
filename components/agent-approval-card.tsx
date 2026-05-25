@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
-import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "@/convex/_generated/api";
+import { SignInButtons } from "@/components/sign-in-buttons";
 
 const isConvexConfigured = Boolean(process.env.NEXT_PUBLIC_CONVEX_URL);
 
@@ -16,7 +16,6 @@ export function AgentApprovalCard({ code }: { code: string }) {
 
 function Connected({ code }: { code: string }) {
   const { isAuthenticated } = useConvexAuth();
-  const { signIn } = useAuthActions();
   const poll = useQuery(api.agentAuth.pollAgentAuth, { code });
   const approve = useMutation(api.agentAuth.approveAgentAuth);
   const reject = useMutation(api.agentAuth.rejectAgentAuth);
@@ -102,14 +101,8 @@ function Connected({ code }: { code: string }) {
           wants access to a Skill Evo account. Sign in first to decide.
         </p>
         <CodeBadge code={code} />
-        <div className="mt-6 flex flex-col gap-2 w-full">
-          <button
-            onClick={() => signIn("github", { redirectTo: window.location.pathname })}
-            className="flex items-center justify-center gap-2 h-10 w-full rounded-lg bg-zinc-900 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900"
-          >
-            <GitHubIcon />
-            Sign in with GitHub
-          </button>
+        <div className="mt-6 w-full">
+          <SignInButtons />
         </div>
       </Shell>
     );

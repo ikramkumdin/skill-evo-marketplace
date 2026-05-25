@@ -113,9 +113,38 @@ async function fetchText(url: string): Promise<string> {
 export const crawlAnthropicSkills = action({
   args: {},
   handler: async (ctx): Promise<{ inserted: number; skipped: number; total: number }> => {
-    const listing = (await fetchJson(
-      `https://api.github.com/repos/${ANTHROPIC_OWNER}/${ANTHROPIC_REPO}/contents/${ANTHROPIC_SKILLS_PATH}`,
-    )) as GitHubDir[];
+    return await ctx.runAction(api.crawl.crawlGitHubRepo, {
+      owner: ANTHROPIC_OWNER,
+      repo: ANTHROPIC_REPO,
+      skillsPath: ANTHROPIC_SKILLS_PATH,
+      submitterHandle: "anthropics",
+    });
+  },
+});
+
+// --- Action: crawl ANY GitHub repo for SKILL.md files -------------------
+
+export const crawlGitHubRepo = action({
+  args: {
+    owner: v.string(),
+    repo: v.string(),
+    skillsPath: v.optional(v.string()),    // subdirectory containing skills (default: "skills")
+    branch: v.optional(v.string()),        // default: "main"
+    submitterHandle: v.optional(v.string()),
+  },
+  handler: async (ctx, args): Promise<{ inserted: number; skipped: number; total: number }> => {
+    const path = args.skillsPath ?? "skills";
+    const branch = args.branch ?? "main";
+    const handle = args.submitterHandle ?? args.owner;
+
+    let listing: GitHubDir[];
+    try {
+      listing = (await fetchJson(
+        `https://api.github.com/repos/${args.owner}/${args.repo}/contents/${path}?ref=${branch}`,
+      )) as GitHubDir[];
+    } catch {
+      return { inserted: 0, skipped: 0, total: 0 };
+    }
 
     const dirs = listing.filter((e) => e.type === "dir");
 
@@ -123,23 +152,24 @@ export const crawlAnthropicSkills = action({
     for (const dir of dirs) {
       try {
         const skillMd = await fetchText(
-          `https://raw.githubusercontent.com/${ANTHROPIC_OWNER}/${ANTHROPIC_REPO}/main/${ANTHROPIC_SKILLS_PATH}/${dir.name}/SKILL.md`,
+          `https://raw.githubusercontent.com/${args.owner}/${args.repo}/${branch}/${path}/${dir.name}/SKILL.md`,
         );
         const fm = parseFrontmatter(skillMd);
         if (!fm?.name || !fm?.description) continue;
 
         const description = fm.description;
         const tagline = description.length > 120 ? description.slice(0, 117) + "..." : description;
+        const slug = slugify(`${args.owner}-${fm.name}`);
 
         parsed.push({
-          slug: slugify(fm.name),
+          slug,
           name: fm.name,
           tagline,
           description,
           category: guessCategory(fm.name, description),
           tags: guessTags(fm.name, description),
-          githubUrl: `https://github.com/${ANTHROPIC_OWNER}/${ANTHROPIC_REPO}/tree/main/${ANTHROPIC_SKILLS_PATH}/${dir.name}`,
-          installCommand: `git clone --depth=1 https://github.com/${ANTHROPIC_OWNER}/${ANTHROPIC_REPO} && cp -r skills/${ANTHROPIC_SKILLS_PATH}/${dir.name} ~/.claude/skills/${slugify(fm.name)}`,
+          githubUrl: `https://github.com/${args.owner}/${args.repo}/tree/${branch}/${path}/${dir.name}`,
+          installCommand: `git clone --depth=1 https://github.com/${args.owner}/${args.repo} && cp -r ${path}/${dir.name} ~/.claude/skills/${slugify(fm.name)}`,
         });
       } catch {
         // Skip dirs without a SKILL.md or with fetch errors
@@ -148,6 +178,7 @@ export const crawlAnthropicSkills = action({
 
     const result = await ctx.runMutation(internal.crawl.upsertCrawledSkills, {
       skills: parsed,
+      submitterHandle: handle,
     });
     return { ...result, total: parsed.length };
   },
@@ -169,8 +200,10 @@ export const upsertCrawledSkills = internalMutation({
         installCommand: v.string(),
       }),
     ),
+    submitterHandle: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const handle = args.submitterHandle ?? "crawler";
     let inserted = 0;
     let skipped = 0;
     for (const s of args.skills) {
@@ -196,7 +229,7 @@ export const upsertCrawledSkills = internalMutation({
         rating: 0,
         ratingCount: 0,
         featured: false,
-        submitterHandle: "anthropics",
+        submitterHandle: handle,
         submitterAvatar: "🤖",
         source: "crawled",
       });

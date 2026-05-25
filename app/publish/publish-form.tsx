@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useAuthActions } from "@convex-dev/auth/react";
 import { useConvexAuth, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { CATEGORIES } from "@/lib/categories";
+import { SignInButtons } from "@/components/sign-in-buttons";
 
 const isConvexConfigured = Boolean(process.env.NEXT_PUBLIC_CONVEX_URL);
 
@@ -25,7 +25,6 @@ export function PublishForm() {
 function ConnectedPublishForm() {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useConvexAuth();
-  const { signIn } = useAuthActions();
   const submit = useMutation(api.skills.submit);
 
   const [busy, setBusy] = useState(false);
@@ -43,15 +42,11 @@ function ConnectedPublishForm() {
     return (
       <Banner kind="warn" title="Sign in to publish">
         <p className="mb-3 text-xs opacity-90">
-          We use GitHub sign-in so submitters are accountable. Click below to authenticate.
+          We use sign-in so submitters are accountable. Pick a provider:
         </p>
-        <button
-          type="button"
-          onClick={() => signIn("github", { redirectTo: "/publish" })}
-          className="inline-flex h-9 items-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
-        >
-          Sign in with GitHub
-        </button>
+        <div className="max-w-xs">
+          <SignInButtons redirectTo="/publish" size="sm" />
+        </div>
       </Banner>
     );
   }
