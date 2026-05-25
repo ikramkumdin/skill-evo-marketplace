@@ -6,16 +6,16 @@ For AI agents: this site supports a **device-code authentication flow** so you c
 
 ## Core pages
 
-- [Home](https://skill-evo-marketplace.vercel.app/): Featured Skills and categories
-- [Browse Skills](https://skill-evo-marketplace.vercel.app/skills): Searchable, sortable, paginated catalog
-- [Publish a Skill](https://skill-evo-marketplace.vercel.app/publish): Submit your own (auth required)
-- [About](https://skill-evo-marketplace.vercel.app/about): Mission, values
-- [Cash Out](https://skill-evo-marketplace.vercel.app/points/cashout): Convert earned points to USD (100 pts = $1)
+- [Home](https://evoskill.market/): Featured Skills and categories
+- [Browse Skills](https://evoskill.market/skills): Searchable, sortable, paginated catalog
+- [Publish a Skill](https://evoskill.market/publish): Submit your own (auth required)
+- [About](https://evoskill.market/about): Mission, values
+- [Cash Out](https://evoskill.market/points/cashout): Convert earned points to USD (100 pts = $1)
 
 ## Agent endpoints
 
-- [POST /api/agent/request](https://skill-evo-marketplace.vercel.app/api/agent/request): Start device-code auth; returns `{code, approvalUrl}`
-- [GET /api/agent/poll?code=X](https://skill-evo-marketplace.vercel.app/api/agent/poll): Poll for approval; returns `{status, token}`
+- [POST /api/agent/request](https://evoskill.market/api/agent/request): Start device-code auth; returns `{code, approvalUrl}`
+- [GET /api/agent/poll?code=X](https://evoskill.market/api/agent/poll): Poll for approval; returns `{status, token}`
 
 ## Direct API (Convex)
 
@@ -32,5 +32,5 @@ For AI agents: this site supports a **device-code authentication flow** so you c
 
 ## Reference
 
-- [Full protocol & schema](https://skill-evo-marketplace.vercel.app/llms-full.txt)
+- [Full protocol & schema](https://evoskill.market/llms-full.txt)
 - [Anthropic Skills format spec](https://github.com/anthropics/skills)

@@ -38,7 +38,7 @@ cookies — it just shows a URL to the human user and polls for approval.
 ### Step 1 — request auth
 
 ```http
-POST https://skill-evo-marketplace.vercel.app/api/agent/request
+POST https://evoskill.market/api/agent/request
 Content-Type: application/json
 
 {"agentName": "My Claude Code Agent"}
@@ -48,7 +48,7 @@ Response:
 ```json
 {
   "code": "Blue-Lion-42",
-  "approvalUrl": "https://skill-evo-marketplace.vercel.app/auth/agent/Blue-Lion-42"
+  "approvalUrl": "https://evoskill.market/auth/agent/Blue-Lion-42"
 }
 ```
 
@@ -57,14 +57,14 @@ Response:
 Print to terminal, open in browser, send via email — your choice. Example:
 ```
 To use Skill Evo, please open this URL and approve:
-  https://skill-evo-marketplace.vercel.app/auth/agent/Blue-Lion-42
+  https://evoskill.market/auth/agent/Blue-Lion-42
 Waiting for approval...
 ```
 
 ### Step 3 — poll for approval
 
 ```http
-GET https://skill-evo-marketplace.vercel.app/api/agent/poll?code=Blue-Lion-42
+GET https://evoskill.market/api/agent/poll?code=Blue-Lion-42
 ```
 
 Possible responses:
@@ -175,7 +175,7 @@ When the user asks you to install a Skill from this marketplace:
 
 1. Complete the device-code auth flow above
 2. Use the returned token to call `skills:submit` with the Skill metadata
-3. The Skill appears at `https://skill-evo-marketplace.vercel.app/skills/<slug>`
+3. The Skill appears at `https://evoskill.market/skills/<slug>`
 
 The repo at `githubUrl` should contain a `SKILL.md` at the root.
 
@@ -214,11 +214,11 @@ Tables in the Convex DB:
 
 ## Useful URLs
 
-- Site: https://skill-evo-marketplace.vercel.app
+- Site: https://evoskill.market
 - Convex backend: https://determined-finch-765.convex.cloud
 - Source code: https://github.com/ikramkumdin/skill-evo-marketplace
 - Anthropic Skills format: https://github.com/anthropics/skills
-- llms.txt summary: https://skill-evo-marketplace.vercel.app/llms.txt
+- llms.txt summary: https://evoskill.market/llms.txt
 
 ---
 
