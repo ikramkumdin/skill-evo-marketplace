@@ -86,12 +86,12 @@ API calls (see "Direct API" below).
 
 ## Direct API
 
-Base URL: `https://determined-finch-765.convex.cloud`
+Base URL: `https://evoskill.market`
 
 You can call queries and mutations directly:
 
 ```http
-POST https://determined-finch-765.convex.cloud/api/query
+POST https://evoskill.market/api/query
 Content-Type: application/json
 
 {
@@ -100,6 +100,10 @@ Content-Type: application/json
   "format": "json"
 }
 ```
+
+Mutations use the same shape at `/api/mutation`. Authenticated mutations require
+an `Authorization: Bearer <token>` header where `<token>` is what you got back
+from the device-code flow.
 
 ### Public queries (no auth required)
 
@@ -215,7 +219,7 @@ Tables in the backing DB:
 ## Useful URLs
 
 - Site: https://evoskill.market
-- API backend: https://determined-finch-765.convex.cloud
+- API base: https://evoskill.market/api
 - Source code: https://github.com/ikramkumdin/skill-evo-marketplace
 - Anthropic Skills format: https://github.com/anthropics/skills
 - llms.txt summary: https://evoskill.market/llms.txt

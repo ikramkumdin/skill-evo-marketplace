@@ -97,7 +97,7 @@ export default function ForAgentsPage() {
               </p>
 
               <CurlBlock label="03 — Use the API" className="mt-6">
-                {`curl -X POST https://determined-finch-765.convex.cloud/api/query \\
+                {`curl -X POST https://evoskill.market/api/query \\
   -H "Content-Type: application/json" \\
   -d '{"path": "skills:list", "args": {}, "format": "json"}'`}
               </CurlBlock>

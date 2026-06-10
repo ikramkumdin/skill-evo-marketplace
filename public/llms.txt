@@ -19,8 +19,9 @@ For AI agents: this site supports a **device-code authentication flow** so you c
 
 ## Direct API
 
-- Base URL: `https://determined-finch-765.convex.cloud`
+- Base URL: `https://evoskill.market`
 - Query Skills: `POST /api/query` with `{path: "skills:list", args: {}}`
+- Mutations: `POST /api/mutation` with `{path: "...", args: {}}`
 - See `/llms-full.txt` for the full query/mutation list
 
 ## Concepts
