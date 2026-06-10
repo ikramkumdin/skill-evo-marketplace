@@ -130,8 +130,9 @@ export default defineSchema({
 
   // Agent device-code authentication
   agentAuthCodes: defineTable({
-    code: v.string(),           // short human-readable, e.g. "BLUE-LION-7"
-    agentName: v.string(),      // label set by the agent
+    code: v.string(),
+    agentName: v.string(),
+    targetUserHandle: v.optional(v.string()),
     status: v.union(
       v.literal("pending"),
       v.literal("approved"),
@@ -140,5 +141,7 @@ export default defineSchema({
     userId: v.optional(v.id("users")),
     token: v.optional(v.string()),
     expiresAt: v.number(),
-  }).index("by_code", ["code"]),
+  })
+    .index("by_code", ["code"])
+    .index("by_target_handle", ["targetUserHandle"]),
 });

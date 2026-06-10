@@ -28,11 +28,14 @@ function randomToken(): string {
 
 // Called by the agent (no auth required)
 export const requestAgentAuth = mutation({
-  args: { agentName: v.string() },
+  args: {
+    agentName: v.string(),
+    targetUserHandle: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
     const name = args.agentName.trim().slice(0, 80) || "Unnamed Agent";
+    const target = args.targetUserHandle?.trim();
 
-    // Generate a unique code (retry on collision)
     let code = randomCode();
     for (let i = 0; i < 5; i++) {
       const existing = await ctx.db
@@ -46,11 +49,55 @@ export const requestAgentAuth = mutation({
     await ctx.db.insert("agentAuthCodes", {
       code,
       agentName: name,
+      targetUserHandle: target || undefined,
       status: "pending",
       expiresAt: Date.now() + CODE_TTL_MS,
     });
 
     return { code };
+  },
+});
+
+// Query: pending agent requests for the currently signed-in user.
+// Matches by user's name/handle/email-prefix against targetUserHandle.
+export const pendingForMe = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    const user = await ctx.db.get(userId);
+    if (!user) return [];
+
+    const u = user as { name?: string; email?: string };
+    const candidates = new Set<string>();
+    if (u.name) candidates.add(u.name.toLowerCase().trim());
+    if (u.email) {
+      candidates.add(u.email.toLowerCase().trim());
+      const prefix = u.email.split("@")[0];
+      if (prefix) candidates.add(prefix.toLowerCase().trim());
+    }
+
+    const now = Date.now();
+    const allPending = await ctx.db
+      .query("agentAuthCodes")
+      .filter((q) => q.eq(q.field("status"), "pending"))
+      .collect();
+
+    return allPending
+      .filter((c) => c.expiresAt > now)
+      .filter(
+        (c) =>
+          c.targetUserHandle &&
+          candidates.has(c.targetUserHandle.toLowerCase().trim()),
+      )
+      .map((c) => ({
+        _id: c._id,
+        code: c.code,
+        agentName: c.agentName,
+        expiresAt: c.expiresAt,
+        _creationTime: c._creationTime,
+      }));
   },
 });
 
@@ -124,12 +171,18 @@ export const rejectAgentAuth = mutation({
 // HTTP endpoint: POST /api/agent/request  → { code, approvalUrl }
 export const httpRequestAgentAuth = httpAction(async (ctx, request) => {
   let agentName = "Unnamed Agent";
+  let targetUserHandle: string | undefined;
   try {
     const body = await request.json();
     if (typeof body.agentName === "string") agentName = body.agentName;
+    if (typeof body.targetUserHandle === "string")
+      targetUserHandle = body.targetUserHandle;
   } catch { /* no body */ }
 
-  const { code } = await ctx.runMutation(api.agentAuth.requestAgentAuth, { agentName });
+  const { code } = await ctx.runMutation(api.agentAuth.requestAgentAuth, {
+    agentName,
+    targetUserHandle,
+  });
 
   const siteUrl =
     process.env.NEXT_PUBLIC_VERCEL_URL

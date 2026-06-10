@@ -64,8 +64,9 @@ function Connected({ code }: { code: string }) {
         </h1>
         <p className="mt-1 text-sm text-zinc-500">
           <span className="font-medium text-zinc-700 dark:text-zinc-300">{poll.agentName}</span> now
-          has access to your Skill Evo account. You can close this tab.
+          has access to your Skill Evo account.
         </p>
+        <DoneActions />
       </Shell>
     );
   }
@@ -77,9 +78,8 @@ function Connected({ code }: { code: string }) {
         <h1 className="mt-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
           Agent rejected
         </h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          Access was denied. You can close this tab.
-        </p>
+        <p className="mt-1 text-sm text-zinc-500">Access was denied.</p>
+        <DoneActions />
       </Shell>
     );
   }
@@ -167,6 +167,25 @@ function Connected({ code }: { code: string }) {
       </div>
       {error && <p className="mt-2 text-xs text-red-500 text-center">{error}</p>}
     </Shell>
+  );
+}
+
+function DoneActions() {
+  return (
+    <div className="mt-6 flex flex-col gap-2 w-full">
+      <a
+        href="/"
+        className="inline-flex h-10 w-full items-center justify-center bg-zinc-950 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
+      >
+        Back to home
+      </a>
+      <a
+        href="/me"
+        className="text-xs text-zinc-500 underline-offset-4 hover:text-zinc-900 hover:underline dark:hover:text-zinc-100"
+      >
+        Or view your profile
+      </a>
+    </div>
   );
 }
 

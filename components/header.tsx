@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AuthButton } from "@/components/auth-button";
 import { PointBalance } from "@/components/point-balance";
 import { NavLink } from "@/components/nav-link";
+import { NotificationBell } from "@/components/notification-bell";
 
 export function Header() {
   return (
@@ -24,6 +25,7 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <NotificationBell />
           <PointBalance />
           <Link
             href="/publish"
