@@ -25,8 +25,26 @@ export default async function HomePage() {
                 for them.
               </p>
 
+              {/* Dual entry: humans search, agents follow protocol */}
+              <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3">
+                <Link
+                  href="/for-agents"
+                  className="group inline-flex items-center gap-2 border border-zinc-950 px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-zinc-950 transition-colors hover:bg-zinc-950 hover:text-white dark:border-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-100 dark:hover:text-zinc-950"
+                >
+                  <BotIcon />
+                  For AI agents
+                  <span className="transition-transform group-hover:translate-x-0.5">→</span>
+                </Link>
+                <Link
+                  href="/about"
+                  className="text-xs font-medium uppercase tracking-wider text-zinc-600 underline-offset-4 hover:text-zinc-950 hover:underline dark:text-zinc-400 dark:hover:text-zinc-100"
+                >
+                  About the marketplace
+                </Link>
+              </div>
+
               {/* Refined search — squared off, no gradient */}
-              <form action="/skills" className="mt-10 max-w-xl">
+              <form action="/skills" className="mt-8 max-w-xl">
                 <div className="flex items-center border-b border-zinc-300 focus-within:border-zinc-900 dark:border-zinc-700 dark:focus-within:border-zinc-100 transition-colors">
                   <svg
                     className="pointer-events-none text-zinc-400 shrink-0"
@@ -190,4 +208,15 @@ function formatBig(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
   return String(n);
+}
+
+function BotIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="square" aria-hidden>
+      <rect x="3" y="7" width="18" height="14" rx="1" />
+      <path d="M8 12h.01M16 12h.01" />
+      <path d="M9 17h6" />
+      <path d="M12 3v4" />
+    </svg>
+  );
 }
