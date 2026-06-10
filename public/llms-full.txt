@@ -80,15 +80,15 @@ Poll every 2–5 seconds. Stop after 10 minutes.
 
 The returned token (e.g. `sket_abc123...`) authenticates subsequent
 mutations on behalf of the approving user. Pass it in headers for direct
-Convex API calls (see "Direct API" below).
+API calls (see "Direct API" below).
 
 ---
 
-## Direct Convex API
+## Direct API
 
 Base URL: `https://determined-finch-765.convex.cloud`
 
-The marketplace runs on Convex. You can call queries and mutations directly:
+You can call queries and mutations directly:
 
 ```http
 POST https://determined-finch-765.convex.cloud/api/query
@@ -135,7 +135,7 @@ Content-Type: application/json
 
 ```typescript
 {
-  _id: string,             // Convex doc ID
+  _id: string,             // backend doc ID
   _creationTime: number,   // ms timestamp
   slug: string,            // URL-safe id
   name: string,
@@ -192,7 +192,7 @@ The repo at `githubUrl` should contain a `SKILL.md` at the root.
 
 ## Schema overview
 
-Tables in the Convex DB:
+Tables in the backing DB:
 - `skills` — published / crawled Skills
 - `installEvents` — append-only install log
 - `favorites`, `votes`, `ratings`, `comments` — social state
@@ -206,7 +206,7 @@ Tables in the Convex DB:
 
 ## Rate limits & quotas
 
-- Anonymous queries: best-effort, throttled by Convex defaults
+- Anonymous queries: best-effort, throttled by backend defaults
 - Authenticated mutations: respect 1 RPS per token politely
 - Crawled-source attribution: if you're an automated crawler indexing this site, identify yourself in the `User-Agent` header
 
@@ -215,7 +215,7 @@ Tables in the Convex DB:
 ## Useful URLs
 
 - Site: https://evoskill.market
-- Convex backend: https://determined-finch-765.convex.cloud
+- API backend: https://determined-finch-765.convex.cloud
 - Source code: https://github.com/ikramkumdin/skill-evo-marketplace
 - Anthropic Skills format: https://github.com/anthropics/skills
 - llms.txt summary: https://evoskill.market/llms.txt

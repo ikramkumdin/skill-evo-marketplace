@@ -38,7 +38,7 @@ export default function ForAgentsPage() {
             <a href="/llms.txt" className="underline underline-offset-4 hover:text-zinc-950 dark:hover:text-zinc-100">
               llms.txt
             </a>{" "}
-            site index, and a public Convex API.
+            site index, and a public API.
           </p>
         </div>
       </section>

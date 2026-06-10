@@ -214,7 +214,7 @@ function GitHubIcon() {
 function ConfigurationError() {
   return (
     <div className="w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-900">
-      <p className="text-sm text-zinc-500">Convex is not configured.</p>
+      <p className="text-sm text-zinc-500">Backend is not configured.</p>
     </div>
   );
 }

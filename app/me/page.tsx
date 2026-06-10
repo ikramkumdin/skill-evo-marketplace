@@ -10,7 +10,7 @@ export default async function MePage() {
   if (!isConvexConfigured) {
     return (
       <div className="mx-auto max-w-md px-6 py-20 text-center">
-        <p className="text-sm text-zinc-500">Convex is not configured.</p>
+        <p className="text-sm text-zinc-500">Backend is not configured.</p>
       </div>
     );
   }

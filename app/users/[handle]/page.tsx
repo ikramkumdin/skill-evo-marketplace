@@ -22,7 +22,7 @@ export default async function UserProfilePage(props: PageProps<"/users/[handle]"
   if (!isConvexConfigured) {
     return (
       <div className="mx-auto max-w-4xl px-6 py-20 text-center">
-        <p className="text-sm text-zinc-500">Profiles require Convex to be configured.</p>
+        <p className="text-sm text-zinc-500">Profiles require backend to be configured.</p>
       </div>
     );
   }

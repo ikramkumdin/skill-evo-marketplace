@@ -13,7 +13,7 @@ const isConvexConfigured = Boolean(process.env.NEXT_PUBLIC_CONVEX_URL);
 export function PublishForm() {
   if (!isConvexConfigured) {
     return (
-      <Banner kind="warn" title="Convex not configured">
+      <Banner kind="warn" title="Backend not configured">
         Run <Code>npx convex dev</Code> in the marketplace folder to enable real
         submissions. The setup steps live in <Code>SETUP.md</Code>.
       </Banner>
