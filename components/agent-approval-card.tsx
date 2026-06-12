@@ -23,20 +23,28 @@ function Connected({ code }: { code: string }) {
   const [done, setDone] = useState<"approved" | "rejected" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  if (!poll) {
-    return <Shell><p className="text-sm text-zinc-500">Loading…</p></Shell>;
+  if (poll === undefined) {
+    return (
+      <Shell>
+        <CodeBadge code={code} />
+        <p className="mt-6 text-sm text-zinc-500">Looking up this code…</p>
+      </Shell>
+    );
   }
 
   if (poll.status === "not_found") {
     return (
       <Shell>
+        <CodeBadge code={code} />
         <StatusIcon kind="error" />
-        <h1 className="mt-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+        <h2 className="mt-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
           Code not found
-        </h1>
+        </h2>
         <p className="mt-1 text-sm text-zinc-500">
-          This authorization code doesn&apos;t exist. Double-check the link your agent provided.
+          This authorization code doesn&apos;t exist. Double-check the URL your
+          agent gave you — codes look like <span className="font-mono">Blue-Lion-42</span>.
         </p>
+        <DoneActions />
       </Shell>
     );
   }
@@ -44,13 +52,16 @@ function Connected({ code }: { code: string }) {
   if (poll.status === "expired") {
     return (
       <Shell>
+        <CodeBadge code={code} />
         <StatusIcon kind="error" />
-        <h1 className="mt-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+        <h2 className="mt-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
           Code expired
-        </h1>
+        </h2>
         <p className="mt-1 text-sm text-zinc-500">
-          This code is more than 10 minutes old. Ask your agent to request a new one.
+          Codes expire 10 minutes after they&apos;re generated. Ask your agent to
+          request a new authorization code, then return here with the new URL.
         </p>
+        <DoneActions />
       </Shell>
     );
   }
@@ -88,7 +99,7 @@ function Connected({ code }: { code: string }) {
   if (!isAuthenticated) {
     return (
       <Shell>
-        <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-indigo-50 text-3xl dark:bg-indigo-900/30">
+        <div className="flex h-14 w-14 items-center justify-center border border-zinc-200 text-3xl dark:border-zinc-800">
           🤖
         </div>
         <h1 className="mt-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
@@ -153,14 +164,14 @@ function Connected({ code }: { code: string }) {
         <button
           onClick={handleApprove}
           disabled={busy !== null}
-          className="flex-1 h-10 rounded-lg bg-indigo-600 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
+          className="flex-1 h-10 bg-zinc-950 text-xs font-medium uppercase tracking-wider text-white transition-colors hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
         >
           {busy === "approve" ? "Approving…" : "Approve"}
         </button>
         <button
           onClick={handleReject}
           disabled={busy !== null}
-          className="flex-1 h-10 rounded-lg border border-zinc-200 bg-white text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200"
+          className="flex-1 h-10 border border-zinc-200 bg-white text-xs font-medium uppercase tracking-wider text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
         >
           {busy === "reject" ? "Rejecting…" : "Reject"}
         </button>
@@ -191,7 +202,7 @@ function DoneActions() {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="w-full max-w-md border border-zinc-200 bg-white p-8 dark:border-zinc-800 dark:bg-zinc-950">
       {children}
     </div>
   );
@@ -219,14 +230,6 @@ function StatusIcon({ kind }: { kind: "success" | "error" | "warning" }) {
     <div className={`flex h-14 w-14 items-center justify-center rounded-full ${map.bg} mx-auto`}>
       <span className={`text-2xl font-bold ${map.color}`}>{map.text}</span>
     </div>
-  );
-}
-
-function GitHubIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
-    </svg>
   );
 }
 
