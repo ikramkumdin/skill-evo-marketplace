@@ -34,8 +34,8 @@ export function Footer() {
 
           <FooterCol title="Platform">
             <FooterLink href="/about">About</FooterLink>
-            <FooterLink href="#">Terms</FooterLink>
-            <FooterLink href="#">Privacy</FooterLink>
+            <FooterLink href="/terms">Terms</FooterLink>
+            <FooterLink href="/privacy">Privacy</FooterLink>
           </FooterCol>
         </div>
 
