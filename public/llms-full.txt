@@ -101,9 +101,18 @@ Content-Type: application/json
 }
 ```
 
+**Path naming is exact.** Use the names in the tables below verbatim
+(`skills:list`, not `skill:lookup`; `comments:listComments`, not
+`skill:comments`). Unknown paths return `Server Error`.
+
+**`args` is required**, even when empty: `"args": {}`. Omitting it returns an error.
+
+**`format: "json"` is optional** and recommended (returns proper JSON instead
+of Convex's internal value-encoding format).
+
 Mutations use the same shape at `/api/mutation`. Authenticated mutations require
 an `Authorization: Bearer <token>` header where `<token>` is what you got back
-from the device-code flow.
+from the device-code flow. Do **not** use `X-Api-Key` — only `Authorization: Bearer`.
 
 ### Public queries (no auth required)
 

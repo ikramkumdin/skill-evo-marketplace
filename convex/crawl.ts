@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { action, internalMutation, internalQuery } from "./_generated/server";
+import { action, mutation, internalMutation, internalQuery } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 
 const ANTHROPIC_OWNER = "anthropics";
@@ -53,14 +53,18 @@ function parseFrontmatter(markdown: string): Record<string, string> | null {
   return result;
 }
 
+// Map to real categories defined in lib/categories.ts:
+// mcp-tools | prompts | workflows | dev-tools | data-apis | security | automation | other
 function guessCategory(name: string, description: string): string {
   const haystack = `${name} ${description}`.toLowerCase();
-  if (/(pdf|docx|pptx|xlsx|spreadsheet|document)/.test(haystack)) return "productivity";
-  if (/(slack|teams|email|chat|comm)/.test(haystack)) return "automation";
-  if (/(design|canvas|brand|gif|theme|art|frontend)/.test(haystack)) return "content";
-  if (/(api|sdk|mcp|builder|test|debug)/.test(haystack)) return "dev-tools";
-  if (/(webapp|web)/.test(haystack)) return "dev-tools";
-  return "dev-tools";
+  if (/(mcp|model context protocol)/.test(haystack)) return "mcp-tools";
+  if (/(security|audit|encrypt|vulnerab|harden|sast)/.test(haystack)) return "security";
+  if (/(slack|teams|chat|email|notify|cron|schedul|automation|webhook)/.test(haystack)) return "automation";
+  if (/(workflow|orchestrat|pipeline|coauthor|multi-step|step-by-step)/.test(haystack)) return "workflows";
+  if (/(prompt|template|few-shot|system prompt)/.test(haystack)) return "prompts";
+  if (/(api|sdk|database|postgres|sql|graphql|fetch|rest|integrat)/.test(haystack)) return "data-apis";
+  if (/(code|debug|deploy|test|build|skill creator|claude code|frontend|webapp)/.test(haystack)) return "dev-tools";
+  return "other";
 }
 
 function guessTags(name: string, description: string): string[] {
@@ -236,6 +240,32 @@ export const upsertCrawledSkills = internalMutation({
       inserted++;
     }
     return { inserted, skipped };
+  },
+});
+
+// One-shot: rewrite category on existing skills that used invented categories.
+export const recategorizeAll = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const all = await ctx.db.query("skills").collect();
+    const validCategories = new Set([
+      "mcp-tools",
+      "prompts",
+      "workflows",
+      "dev-tools",
+      "data-apis",
+      "security",
+      "automation",
+      "other",
+    ]);
+    let fixed = 0;
+    for (const s of all) {
+      if (validCategories.has(s.category)) continue;
+      const next = guessCategory(s.name, s.description);
+      await ctx.db.patch(s._id, { category: next });
+      fixed++;
+    }
+    return { fixed, total: all.length };
   },
 });
 
