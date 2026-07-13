@@ -26,7 +26,7 @@ export function Footer() {
 
           <FooterCol title="Build">
             <FooterLink href="/publish">Publish a Skill</FooterLink>
-            <FooterLink href="/about">Submission rules</FooterLink>
+            <FooterLink href="/submission-rules">Submission rules</FooterLink>
             <FooterLink href="https://github.com" external>
               GitHub
             </FooterLink>
