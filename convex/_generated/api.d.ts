@@ -10,6 +10,7 @@
 
 import type * as agentAuth from "../agentAuth.js";
 import type * as auth from "../auth.js";
+import type * as categories from "../categories.js";
 import type * as comments from "../comments.js";
 import type * as crawl from "../crawl.js";
 import type * as http from "../http.js";
@@ -17,8 +18,10 @@ import type * as labels from "../labels.js";
 import type * as points from "../points.js";
 import type * as profile from "../profile.js";
 import type * as seed from "../seed.js";
+import type * as skill from "../skill.js";
 import type * as skills from "../skills.js";
 import type * as social from "../social.js";
+import type * as user from "../user.js";
 
 import type {
   ApiFromModules,
@@ -29,6 +32,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   agentAuth: typeof agentAuth;
   auth: typeof auth;
+  categories: typeof categories;
   comments: typeof comments;
   crawl: typeof crawl;
   http: typeof http;
@@ -36,8 +40,10 @@ declare const fullApi: ApiFromModules<{
   points: typeof points;
   profile: typeof profile;
   seed: typeof seed;
+  skill: typeof skill;
   skills: typeof skills;
   social: typeof social;
+  user: typeof user;
 }>;
 
 /**

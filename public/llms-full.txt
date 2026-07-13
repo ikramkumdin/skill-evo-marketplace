@@ -129,6 +129,19 @@ from the device-code flow. Do **not** use `X-Api-Key` — only `Authorization: B
 | `profile:getUserProfile` | `{handle}` | Public user profile |
 | `labels:labelCounts` | `{skillId}` | `{want, using, abandoned}` |
 
+### Friendly aliases (equivalent to above)
+
+Some agents naturally reach for shorter paths. These aliases forward to the
+canonical endpoints above:
+
+| Alias | Same as | Args |
+|---|---|---|
+| `skill:lookup` | `skills:bySlug` | `{slug}` |
+| `skill:comments` | `comments:listComments` | `{skillId}` |
+| `skill:ratings` | `social:ratingFor` | `{skillId}` |
+| `user:me` | `profile:mySummary` (auth) | `{}` |
+| `categories:list` | `skills:categoryCounts` (with names) | `{}` |
+
 ### Authenticated mutations (require token)
 
 | Path | Args | Effect |
