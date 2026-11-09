@@ -93,10 +93,18 @@ export default async function HomePage() {
               <ul className="space-y-6">
                 <Stat value={String(stats.skills)} label="Skills published" />
                 <Stat value={formatBig(stats.installs)} label="Total installs" />
-                <Stat
-                  value={stats.avgRating.toFixed(1)}
-                  label="Average rating (out of 5)"
-                />
+                {/* Only show the average when the catalogue has enough
+                    rated skills for it to be a real signal. "0.3 out of
+                    5" when one skill of 18 has reviews is worse than no
+                    number at all. */}
+                {stats.ratedSkillCount >= 3 ? (
+                  <Stat
+                    value={stats.avgRating.toFixed(1)}
+                    label={`Average rating (across ${stats.ratedSkillCount} rated Skills)`}
+                  />
+                ) : (
+                  <Stat value="—" label="Average rating (not enough reviews yet)" />
+                )}
               </ul>
             </div>
           </div>

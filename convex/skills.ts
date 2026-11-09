@@ -138,12 +138,27 @@ export const stats = query({
       isPubliclyVisible,
     );
     if (skills.length === 0) {
-      return { skills: 0, installs: 0, avgRating: 0 };
+      return { skills: 0, installs: 0, avgRating: 0, ratedSkillCount: 0 };
     }
+    // Compute a weighted average over the ratings that actually exist.
+    // The previous formula (sum of per-skill averages ÷ number of skills)
+    // counted every unrated skill as a 0, which dragged the platform
+    // average to ~0.3 as long as almost no skill had been rated. The
+    // weighted form matches the true "average star across all reviews".
+    const totalRatings = skills.reduce((acc, s) => acc + s.ratingCount, 0);
+    const avgRating =
+      totalRatings === 0
+        ? 0
+        : skills.reduce((acc, s) => acc + s.rating * s.ratingCount, 0) /
+          totalRatings;
+    const ratedSkillCount = skills.filter((s) => s.ratingCount > 0).length;
     return {
       skills: skills.length,
       installs: skills.reduce((acc, s) => acc + s.installs, 0),
-      avgRating: skills.reduce((acc, s) => acc + s.rating, 0) / skills.length,
+      avgRating,
+      // Exposed so the UI can hide or hedge the stat when the catalogue
+      // is still too thinly rated to be a useful signal.
+      ratedSkillCount,
     };
   },
 });

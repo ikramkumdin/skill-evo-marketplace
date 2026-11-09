@@ -28,6 +28,14 @@ export function SkillCard({ skill }: { skill: DisplaySkill }) {
             Featured
           </span>
         )}
+        {skill.moderationStatus === "pending" && (
+          <span
+            title="This Skill is waiting for moderator review. Only you can see it until it's approved."
+            className="inline-flex items-center border border-amber-500 bg-amber-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200"
+          >
+            Pending review
+          </span>
+        )}
       </div>
 
       <p className="mb-5 flex-1 text-sm leading-relaxed text-zinc-600 line-clamp-2 dark:text-zinc-400">

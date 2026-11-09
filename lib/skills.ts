@@ -271,9 +271,16 @@ export function filterSkills(skills: Skill[], filter: SkillFilter): Skill[] {
 }
 
 export function totalStats() {
+  const totalRatings = SKILLS.reduce((acc, s) => acc + s.ratingCount, 0);
+  const avgRating =
+    totalRatings === 0
+      ? 0
+      : SKILLS.reduce((acc, s) => acc + s.rating * s.ratingCount, 0) /
+        totalRatings;
   return {
     skills: SKILLS.length,
     installs: SKILLS.reduce((acc, s) => acc + s.installs, 0),
-    avgRating: SKILLS.reduce((acc, s) => acc + s.rating, 0) / SKILLS.length,
+    avgRating,
+    ratedSkillCount: SKILLS.filter((s) => s.ratingCount > 0).length,
   };
 }

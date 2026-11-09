@@ -195,13 +195,24 @@ export async function getStats(): Promise<{
   skills: number;
   installs: number;
   avgRating: number;
+  ratedSkillCount: number;
 }> {
   if (isConvexConfigured) {
     try {
-      return (await fetchQuery(api.skills.stats, {})) as {
+      const raw = (await fetchQuery(api.skills.stats, {})) as {
         skills: number;
         installs: number;
         avgRating: number;
+        // Added in the Round-5 stats fix. Codegen hasn't shipped it yet
+        // on the local checkout, so widen the return and default to 0 if
+        // we're hitting a pre-deploy function.
+        ratedSkillCount?: number;
+      };
+      return {
+        skills: raw.skills,
+        installs: raw.installs,
+        avgRating: raw.avgRating,
+        ratedSkillCount: raw.ratedSkillCount ?? 0,
       };
     } catch (e) {
       console.warn("[data] Convex query failed, falling back to mock:", e);
