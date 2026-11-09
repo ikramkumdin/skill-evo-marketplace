@@ -16,3 +16,39 @@ export async function POST(req: NextRequest) {
     headers: { "Content-Type": "application/json" },
   });
 }
+
+// GET/HEAD are not meaningful here — the real endpoint is POST. But
+// documentation links, link-checker bots and devs poking the URL in a
+// browser all hit this path, producing a 405 log entry each time. Serve
+// them a 200 JSON hint instead so the logs stay useful for real
+// errors, and the hint tells them how to actually call this.
+const HINT = {
+  endpoint: "/api/agent/request",
+  method: "POST",
+  description:
+    "Start device-code agent sign-in. Returns { code, approvalUrl }.",
+  example:
+    "curl -X POST https://evoskill.market/api/agent/request -H 'Content-Type: application/json' -d '{\"agentName\":\"My Agent\"}'",
+  docs: "https://evoskill.market/for-agents",
+} as const;
+
+export async function GET() {
+  return NextResponse.json(HINT, {
+    status: 200,
+    headers: {
+      // Let bots/crawlers cache the hint rather than hammering us.
+      "Cache-Control": "public, max-age=300, s-maxage=3600",
+      Allow: "POST",
+    },
+  });
+}
+
+export async function HEAD() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      "Cache-Control": "public, max-age=300, s-maxage=3600",
+      Allow: "POST",
+    },
+  });
+}
