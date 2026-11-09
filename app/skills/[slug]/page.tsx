@@ -218,7 +218,7 @@ export default async function SkillDetailPage(props: PageProps<"/skills/[slug]">
             </div>
           </Section>
 
-          {skill.id && (
+          {skill.id && skill.moderationStatus !== "pending" && (
             <Section title="Comments">
               <CommentThread skillId={skill.id} />
             </Section>
@@ -227,12 +227,16 @@ export default async function SkillDetailPage(props: PageProps<"/skills/[slug]">
 
         {/* Sidebar */}
         <aside className="space-y-6">
-          {skill.id && (
+          {/* Same reasoning as the Install / SkillSocialBar hide above:
+              a Skill still waiting for moderation shouldn't accrue
+              ratings, "using / want / abandoned" labels or comments
+              from its own submitter (nobody else can see it yet). */}
+          {skill.id && skill.moderationStatus !== "pending" && (
             <SidebarCard title="Rate this Skill">
               <StarRating skillId={skill.id} />
             </SidebarCard>
           )}
-          {skill.id && (
+          {skill.id && skill.moderationStatus !== "pending" && (
             <SidebarCard title="My Status">
               <SkillLabelPicker skillId={skill.id} />
             </SidebarCard>

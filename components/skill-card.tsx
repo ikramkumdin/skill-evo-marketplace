@@ -9,6 +9,10 @@ export function SkillCard({ skill }: { skill: DisplaySkill }) {
   return (
     <Link
       href={`/skills/${skill.slug}`}
+      // Disable prefetch so a Skills-list page view doesn't fire a
+      // server request for every visible card. See nav-link.tsx for
+      // the same reasoning.
+      prefetch={false}
       className="group flex flex-col border border-zinc-200 bg-white p-6 transition-colors hover:border-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-100"
     >
       <div className="mb-4 flex items-start justify-between gap-3">
