@@ -3,10 +3,13 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { useConvexAuth } from "convex/react";
+import { useAuthActions } from "@convex-dev/auth/react";
 import { AuthButton } from "@/components/auth-button";
 import { PointBalance } from "@/components/point-balance";
 import { NavLink } from "@/components/nav-link";
 import { NotificationBell } from "@/components/notification-bell";
+import { SignInButtons } from "@/components/sign-in-buttons";
 
 const NAV = [
   { href: "/skills", label: "Skills" },
@@ -112,17 +115,77 @@ export function Header() {
               <Link
                 href="/publish"
                 onClick={() => setOpen(false)}
+                prefetch={false}
                 className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-zinc-900 text-sm font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
               >
                 Submit a Skill
               </Link>
-              <div className="flex justify-center">
-                <AuthButton />
-              </div>
+              {/* AuthButton's own menu is hidden below `sm` width because
+                  the dropdown isn't ergonomic on a phone. Inline the
+                  authenticated / anonymous action set directly here so
+                  mobile users actually see Profile / Cash Out / Sign Out. */}
+              <MobileAuthLinks onNavigate={() => setOpen(false)} />
             </div>
           </div>
         </div>
       )}
     </header>
+  );
+}
+
+function MobileAuthLinks({ onNavigate }: { onNavigate: () => void }) {
+  const { isAuthenticated, isLoading } = useConvexAuth();
+  const { signOut } = useAuthActions();
+  const [busy, setBusy] = useState(false);
+
+  if (isLoading) {
+    return (
+      <div className="h-10 w-full animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-900" />
+    );
+  }
+
+  if (isAuthenticated) {
+    return (
+      <>
+        <Link
+          href="/me"
+          onClick={onNavigate}
+          prefetch={false}
+          className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-white text-sm font-medium text-zinc-700 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200"
+        >
+          👤 My Profile
+        </Link>
+        <Link
+          href="/points/cashout"
+          onClick={onNavigate}
+          prefetch={false}
+          className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-white text-sm font-medium text-zinc-700 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200"
+        >
+          💰 Cash Out
+        </Link>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              await signOut();
+            } finally {
+              setBusy(false);
+              onNavigate();
+            }
+          }}
+          className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-white text-sm font-medium text-zinc-700 disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200"
+        >
+          {busy ? "Signing out…" : "Sign out"}
+        </button>
+      </>
+    );
+  }
+
+  return (
+    <div className="pt-1">
+      <SignInButtons size="sm" />
+    </div>
   );
 }

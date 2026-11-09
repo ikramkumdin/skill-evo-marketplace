@@ -208,7 +208,7 @@ function Pagination({
       className="mt-8 flex items-center justify-center gap-1.5 flex-wrap"
     >
       {currentPage > 1 ? (
-        <Link href={buildHref(currentPage - 1)} className={cls(false)} aria-label="Previous page">
+        <Link href={buildHref(currentPage - 1)} prefetch={false} className={cls(false)} aria-label="Previous page">
           ←
         </Link>
       ) : (
@@ -222,13 +222,13 @@ function Pagination({
             …
           </span>
         ) : (
-          <Link key={p} href={buildHref(p)} className={cls(p === currentPage)}>
+          <Link key={p} href={buildHref(p)} prefetch={false} className={cls(p === currentPage)}>
             {p}
           </Link>
         ),
       )}
       {currentPage < totalPages ? (
-        <Link href={buildHref(currentPage + 1)} className={cls(false)} aria-label="Next page">
+        <Link href={buildHref(currentPage + 1)} prefetch={false} className={cls(false)} aria-label="Next page">
           →
         </Link>
       ) : (
