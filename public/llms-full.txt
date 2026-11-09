@@ -170,7 +170,7 @@ canonical endpoints above:
   category: string,        // dev-tools | mcp-tools | productivity | automation | content | research
   tags: string[],          // max 5
   githubUrl: string,
-  installCommand: string,  // ready-to-run shell command
+  installCommand: string,  // ready-to-run shell command (server-generated from githubUrl at submit time — see skills:submit note above)
   installs: number,
   stars: number,
   rating: number,          // current average 0..5

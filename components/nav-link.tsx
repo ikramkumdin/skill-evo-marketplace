@@ -14,6 +14,13 @@ export function NavLink({ href, children }: { href: string; children: React.Reac
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
+      // Next prefetches on hover+intent by default, which sends ~20
+      // Convex-backed server requests per page view across the header
+      // and category links. On a cold Convex deployment that triggers
+      // throttled 503s on background preloads. Disable prefetch here:
+      // users still get a fast navigation on click, and the server
+      // isn't hammered by preloads that may never be followed.
+      prefetch={false}
       className={`rounded-md px-3 py-1.5 transition-colors ${
         active
           ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"

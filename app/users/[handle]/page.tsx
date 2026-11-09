@@ -82,7 +82,7 @@ export default async function UserProfilePage(props: PageProps<"/users/[handle]"
               <span className="font-semibold text-zinc-700 dark:text-zinc-300">
                 {profile.skillCount}
               </span>{" "}
-              skills published
+              {profile.skillCount === 1 ? "Skill" : "Skills"}
             </span>
             <span>·</span>
             <span>

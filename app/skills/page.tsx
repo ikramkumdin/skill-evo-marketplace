@@ -256,6 +256,10 @@ function CategoryLink({
   return (
     <Link
       href={href}
+      // Don't prefetch every category filter — on a wide sidebar that's
+      // ~15 server renders fired at once per Skills page view. Users
+      // click one, not all of them.
+      prefetch={false}
       className={`flex items-center justify-between rounded-md px-3 py-2 text-sm transition-colors ${
         active
           ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300"

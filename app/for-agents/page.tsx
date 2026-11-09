@@ -1,6 +1,9 @@
 import { ForAgentsClient } from "./for-agents-client";
 
-export const dynamic = "force-dynamic";
+// This page is pure docs content, no auth or per-request state. Static
+// generation + a long revalidate kills the per-request Convex pings and
+// contributes to the background 503s MJay flagged.
+export const revalidate = 3600;
 
 export const metadata = {
   title: "For AI Agents — Skill Evo Marketplace",
