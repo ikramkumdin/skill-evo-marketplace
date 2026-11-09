@@ -1,7 +1,16 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { query, mutation, internalMutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import type { Doc, Id } from "./_generated/dataModel";
+
+// Convex sanitises thrown `Error` messages to "Server Error" on the
+// client to avoid leaking server internals. Throwing a ConvexError
+// carries the message through verbatim, so the UI can show the user
+// exactly which field was wrong instead of a generic "check the
+// fields" fallback.
+function validationError(message: string): never {
+  throw new ConvexError(message);
+}
 
 // A skill is "publicly visible" when it's approved OR when it's a legacy
 // row with no moderationStatus set (so the seed catalog stays visible).
@@ -172,9 +181,7 @@ export const submit = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Sign in to submit a Skill.");
-    }
+    if (!userId) validationError("Sign in to submit a Skill.");
 
     // Normalize + validate the GitHub URL. Strip trailing `.git` and `/`.
     const normalizedUrl = args.githubUrl
@@ -182,8 +189,8 @@ export const submit = mutation({
       .replace(/\.git$/, "")
       .replace(/\/$/, "");
     if (!GITHUB_URL_RE.test(normalizedUrl)) {
-      throw new Error(
-        "githubUrl must be a https://github.com/<owner>/<repo> URL.",
+      validationError(
+        "GitHub repository URL must be a https://github.com/<owner>/<repo> URL.",
       );
     }
 
@@ -191,32 +198,30 @@ export const submit = mutation({
     // so API callers can't bypass them.
     const name = args.name.trim();
     if (name.length < 1 || name.length > 60) {
-      throw new Error("Name must be 1–60 characters.");
+      validationError("Name must be 1–60 characters.");
     }
     const tagline = args.tagline.trim();
     if (tagline.length < 1 || tagline.length > 120) {
-      throw new Error("Tagline must be 1–120 characters.");
+      validationError("Tagline must be 1–120 characters.");
     }
     const description = args.description.trim();
     if (description.length < 1) {
-      throw new Error("Description is required.");
+      validationError("Description is required.");
     }
 
     const user = await ctx.db.get(userId);
-    if (!user) {
-      throw new Error("User record missing.");
-    }
+    if (!user) validationError("User record missing.");
 
     const slug = slugify(name);
     if (slug.length < 2) {
-      throw new Error("Name must produce a valid slug.");
+      validationError("Name must contain at least 2 letters or numbers.");
     }
     const existing = await ctx.db
       .query("skills")
       .withIndex("by_slug", (q) => q.eq("slug", slug))
       .first();
     if (existing) {
-      throw new Error("A Skill with that name already exists.");
+      validationError("A Skill with that name already exists.");
     }
 
     const handle =
@@ -330,12 +335,12 @@ export const updateSkill = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Sign in to edit a Skill.");
+    if (!userId) validationError("Sign in to edit a Skill.");
 
     const skill = await ctx.db.get(args.id);
-    if (!skill) throw new Error("Skill not found.");
+    if (!skill) validationError("Skill not found.");
     if (skill.submitterId !== userId) {
-      throw new Error("You can only edit Skills you published.");
+      validationError("You can only edit Skills you published.");
     }
 
     const patch: Partial<Doc<"skills">> = {};
@@ -343,7 +348,7 @@ export const updateSkill = mutation({
     if (args.name !== undefined) {
       const name = args.name.trim();
       if (name.length < 1 || name.length > 60) {
-        throw new Error("Name must be 1–60 characters.");
+        validationError("Name must be 1–60 characters.");
       }
       patch.name = name;
       // Slug stays fixed to avoid breaking URLs and references. If the
@@ -353,14 +358,14 @@ export const updateSkill = mutation({
     if (args.tagline !== undefined) {
       const tagline = args.tagline.trim();
       if (tagline.length < 1 || tagline.length > 120) {
-        throw new Error("Tagline must be 1–120 characters.");
+        validationError("Tagline must be 1–120 characters.");
       }
       patch.tagline = tagline;
     }
 
     if (args.description !== undefined) {
       const description = args.description.trim();
-      if (description.length < 1) throw new Error("Description is required.");
+      if (description.length < 1) validationError("Description is required.");
       patch.description = description;
     }
 
@@ -370,8 +375,8 @@ export const updateSkill = mutation({
         .replace(/\.git$/, "")
         .replace(/\/$/, "");
       if (!GITHUB_URL_RE.test(normalizedUrl)) {
-        throw new Error(
-          "githubUrl must be a https://github.com/<owner>/<repo> URL.",
+        validationError(
+          "GitHub repository URL must be a https://github.com/<owner>/<repo> URL.",
         );
       }
       patch.githubUrl = normalizedUrl;

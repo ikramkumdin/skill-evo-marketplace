@@ -1,4 +1,5 @@
 import { fetchQuery } from "convex/nextjs";
+import { convexAuthNextjsToken } from "@convex-dev/auth/nextjs/server";
 import { api } from "@/convex/_generated/api";
 import {
   SKILLS as MOCK_SKILLS,
@@ -9,6 +10,21 @@ import {
   type Skill as MockSkill,
 } from "./skills";
 import { CATEGORIES } from "./categories";
+
+// Pull the signed-in viewer's Convex auth token when we're rendering on
+// the server, so `getAuthUserId` inside Convex queries sees the real
+// user. Without this, SSR calls like `skills:bySlug` and
+// `profile:getUserProfile` think the viewer is anonymous and hide
+// pending rows from the submitter looking at their own content.
+// Swallows errors so unauthenticated page loads still render.
+async function viewerToken(): Promise<string | undefined> {
+  try {
+    const token = await convexAuthNextjsToken();
+    return token ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
 export const isConvexConfigured = Boolean(convexUrl);
@@ -147,9 +163,15 @@ export async function getSkillWithRelated(slug: string): Promise<{
 } | null> {
   if (isConvexConfigured) {
     try {
-      const result = (await fetchQuery(api.skills.bySlug, { slug })) as
-        | { skill: ConvexSkillDoc; related: ConvexSkillDoc[] }
-        | null;
+      // Pass the viewer's token so pending skills are visible to their
+      // submitter. Anonymous viewers get undefined → the Convex query's
+      // `isPubliclyVisible` filter keeps pending rows hidden.
+      const token = await viewerToken();
+      const result = (await fetchQuery(
+        api.skills.bySlug,
+        { slug },
+        { token },
+      )) as { skill: ConvexSkillDoc; related: ConvexSkillDoc[] } | null;
       if (!result) return null;
       return {
         skill: convexToDisplay(result.skill),
