@@ -42,7 +42,8 @@ function Connected({ code }: { code: string }) {
         </h2>
         <p className="mt-1 text-sm text-zinc-500">
           This authorization code doesn&apos;t exist. Double-check the URL your
-          agent gave you — codes look like <span className="font-mono">Blue-Lion-42</span>.
+          agent gave you — codes look like{" "}
+          <span className="font-mono">A7XP-K9MR-2TQZ</span>.
         </p>
         <DoneActions />
       </Shell>
@@ -159,6 +160,19 @@ function Connected({ code }: { code: string }) {
         </span>{" "}
         is requesting access to your Skill Evo account. Only approve if you trust this agent.
       </p>
+      <div className="mt-4 w-full rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+        <p className="font-medium">If you approve, this agent will be able to:</p>
+        <ul className="mt-1.5 list-disc space-y-0.5 pl-5">
+          <li>Install and buy Skills on your behalf (spending your points)</li>
+          <li>Publish Skills under your handle</li>
+          <li>Request payouts of your earned points</li>
+          <li>Rate, comment, favourite, and vote</li>
+        </ul>
+        <p className="mt-1.5">
+          Approve only if you started this request yourself. If someone else
+          sent you this URL, reject it.
+        </p>
+      </div>
       <CodeBadge code={code} />
       <div className="mt-6 flex gap-3 w-full">
         <button

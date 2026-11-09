@@ -144,4 +144,11 @@ export default defineSchema({
   })
     .index("by_code", ["code"])
     .index("by_target_handle", ["targetUserHandle"]),
+
+  // Per-IP rate-limit counter for the public /api/agent/poll endpoint.
+  // One row per poll attempt. Pruned opportunistically.
+  pollRateLimit: defineTable({
+    ip: v.string(),
+    timestamp: v.number(),
+  }).index("by_ip", ["ip"]),
 });
