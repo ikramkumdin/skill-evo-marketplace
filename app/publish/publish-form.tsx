@@ -1,12 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useConvexAuth, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { CATEGORIES } from "@/lib/categories";
 import { SignInButtons } from "@/components/sign-in-buttons";
+
+// Mirrors the server strip pattern in components/comment-thread.tsx.
+// Convex errors arrive like "[CONVEX M(skills:submit)] [Request ID: …]
+// Server Error. Called by client" — strip the framework prefix, and if
+// what remains is the generic "Server Error" fall back to the caller's
+// friendly default so the user sees what to do, not internals.
+function friendlyConvexError(err: unknown, fallback: string): string {
+  if (!(err instanceof Error)) return fallback;
+  const raw = err.message || fallback;
+  const stripped = raw
+    .replace(/^\[CONVEX [^\]]+\]\s*/i, "")
+    .replace(/^\[Request ID:[^\]]+\]\s*/i, "")
+    .replace(/\s*Called by client\.?\s*$/i, "")
+    .trim();
+  if (!stripped || /^server error\.?$/i.test(stripped)) return fallback;
+  return stripped;
+}
 
 const isConvexConfigured = Boolean(process.env.NEXT_PUBLIC_CONVEX_URL);
 
@@ -23,12 +39,14 @@ export function PublishForm() {
 }
 
 function ConnectedPublishForm() {
-  const router = useRouter();
   const { isAuthenticated, isLoading } = useConvexAuth();
   const submit = useMutation(api.skills.submit);
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState<{ slug: string; name: string } | null>(
+    null,
+  );
 
   if (isLoading) {
     return (
@@ -75,13 +93,64 @@ function ConnectedPublishForm() {
     };
     try {
       const result = await submit(payload);
-      router.push(`/skills/${result.slug}`);
+      // New submissions land as "pending" moderation, so routing straight
+      // to /skills/<slug> would 404 a public reader. Instead show a
+      // success panel in place of the form.
+      setSubmitted({ slug: result.slug, name: payload.name });
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Submission failed.";
-      setError(msg);
+      setError(
+        friendlyConvexError(
+          e,
+          "Couldn't submit this Skill. Check the fields and try again.",
+        ),
+      );
       setBusy(false);
     }
   };
+
+  if (submitted) {
+    return (
+      <div className="space-y-4 rounded-xl border border-emerald-200 bg-emerald-50 p-6 dark:border-emerald-500/30 dark:bg-emerald-500/10">
+        <div className="flex items-start gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-lg text-white">
+            ✓
+          </span>
+          <div>
+            <h2 className="text-lg font-semibold text-emerald-900 dark:text-emerald-200">
+              Submitted for review
+            </h2>
+            <p className="mt-1 text-sm text-emerald-900/90 dark:text-emerald-200/90">
+              <strong>{submitted.name}</strong> is now in the moderation queue.
+              Only you can see it until a reviewer approves it, after which it
+              appears in the public catalogue and starts counting toward your
+              reputation.
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-3 pl-13">
+          <Link
+            href={`/skills/${submitted.slug}`}
+            className="inline-flex h-9 items-center rounded-lg bg-emerald-600 px-4 text-sm font-medium text-white hover:bg-emerald-500"
+          >
+            View your pending Skill
+          </Link>
+          <Link
+            href="/me"
+            className="inline-flex h-9 items-center rounded-lg border border-emerald-300 bg-white px-4 text-sm font-medium text-emerald-800 hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-transparent dark:text-emerald-200 dark:hover:bg-emerald-500/10"
+          >
+            Go to your profile
+          </Link>
+          <button
+            type="button"
+            onClick={() => { setSubmitted(null); setError(null); setBusy(false); }}
+            className="text-sm text-emerald-700 hover:text-emerald-900 dark:text-emerald-300"
+          >
+            Submit another
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <form

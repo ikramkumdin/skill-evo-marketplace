@@ -230,10 +230,14 @@ function DeleteConfirm({
 function friendlyConvexError(err: unknown, fallback: string): string {
   if (!(err instanceof Error)) return fallback;
   const raw = err.message || fallback;
-  // Common Convex prefixes we want to strip.
+  // Common Convex prefixes we want to strip. We also drop the trailing
+  // "Called by client" pseudo-tag that leaks past the main prefix when
+  // the server throws a bare error, so a too-long comment doesn't read
+  // as "Server Error Called by client".
   const stripped = raw
     .replace(/^\[CONVEX [^\]]+\]\s*/i, "")
     .replace(/^\[Request ID:[^\]]+\]\s*/i, "")
+    .replace(/\s*Called by client\.?\s*$/i, "")
     .trim();
   if (!stripped || /^server error\.?$/i.test(stripped)) return fallback;
   return stripped;

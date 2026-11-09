@@ -21,6 +21,12 @@ export const getUserProfile = query({
     let userId = skills.find((s) => s.submitterId)?.submitterId ?? null;
     let avatar: string = skills[0]?.submitterAvatar ?? "🤖";
 
+    // Pending / rejected skills are only visible on the profile to the
+    // profile owner. Logged-out visitors and other users shouldn't see
+    // them — their /skills/<slug> link 404s anyway, which just looks
+    // like a broken listing.
+    const viewerId = await getAuthUserId(ctx);
+
     // Fallback: no skills matched the handle — look up user by name/email
     // in the auth users table. This lets profile pages exist for users who
     // haven't published any skills yet.
@@ -57,6 +63,16 @@ export const getUserProfile = query({
     );
     const reputation = totalInstalls + approvedForRep.length * 50;
 
+    // Filter the public list unless the viewer is the profile owner.
+    const isOwner = viewerId !== null && viewerId === userId;
+    const publicSkills = isOwner
+      ? skills
+      : skills.filter(
+          (s) =>
+            s.moderationStatus === undefined ||
+            s.moderationStatus === "approved",
+        );
+
     // Labels (public)
     const labeledSkills: Array<{ label: LabelValue; skill: SkillDoc }> = [];
     if (userId) {
@@ -87,12 +103,16 @@ export const getUserProfile = query({
       handle: args.handle,
       avatar,
       userId,
-      publishedSkills: skills,
+      publishedSkills: publicSkills,
       labeledSkills,
       favorites,
       reputation,
-      skillCount: skills.length,
+      skillCount: publicSkills.length,
       totalInstalls,
+      // True iff the signed-in viewer is looking at their own profile;
+      // the UI uses this to show "pending review" badges on hidden
+      // skills without leaking that info to anonymous visitors.
+      isOwner,
     };
   },
 });

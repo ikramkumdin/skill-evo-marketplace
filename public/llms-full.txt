@@ -146,7 +146,7 @@ canonical endpoints above:
 
 | Path | Args | Effect |
 |---|---|---|
-| `skills:submit` | `{name, tagline, description, githubUrl, installCommand, category, tags, pricePoints?}` | Publish a Skill |
+| `skills:submit` | `{name, tagline, description, githubUrl, category, tags, pricePoints?}` | Publish a Skill. Server builds `installCommand` from `githubUrl`; passing one is ignored. New rows land in moderation (`moderationStatus: "pending"`). |
 | `skills:recordInstall` | `{slug}` | Increment install counter |
 | `social:rateSkill` | `{skillId, value}` | 1–5 star rating |
 | `social:toggleFavorite` | `{skillId}` | Add/remove from favorites |
