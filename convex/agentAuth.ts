@@ -265,23 +265,26 @@ export const httpRequestAgentAuth = httpAction(async (ctx, request) => {
 
   const b = body as { agentName?: unknown; targetUserHandle?: unknown };
 
-  let agentName = "Unnamed Agent";
-  if (b.agentName !== undefined) {
-    if (typeof b.agentName !== "string") {
-      return jsonError("agentName must be a string.", 400);
-    }
-    const trimmed = b.agentName.trim();
-    if (trimmed.length === 0) {
-      return jsonError("agentName must not be empty.", 400);
-    }
-    if (trimmed.length > AGENT_NAME_MAX) {
-      return jsonError(
-        `agentName must be ${AGENT_NAME_MAX} characters or fewer.`,
-        400,
-      );
-    }
-    agentName = trimmed;
+  // agentName is required — the approval page shows it to the user,
+  // so accepting a request without one would let agents hide their
+  // identity behind "Unnamed Agent".
+  if (b.agentName === undefined || b.agentName === null) {
+    return jsonError("agentName is required.", 400);
   }
+  if (typeof b.agentName !== "string") {
+    return jsonError("agentName must be a string.", 400);
+  }
+  const agentNameTrimmed = b.agentName.trim();
+  if (agentNameTrimmed.length === 0) {
+    return jsonError("agentName must not be empty.", 400);
+  }
+  if (agentNameTrimmed.length > AGENT_NAME_MAX) {
+    return jsonError(
+      `agentName must be ${AGENT_NAME_MAX} characters or fewer.`,
+      400,
+    );
+  }
+  const agentName = agentNameTrimmed;
 
   let targetUserHandle: string | undefined;
   if (b.targetUserHandle !== undefined && b.targetUserHandle !== null) {

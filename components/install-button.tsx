@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useMutation } from "convex/react";
+import { useEffect, useState } from "react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
 const isConvexConfigured = Boolean(process.env.NEXT_PUBLIC_CONVEX_URL);
@@ -45,6 +45,16 @@ function ConnectedButton({
   const [state, setState] = useState<"idle" | "done" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const recordInstall = useMutation(api.skills.recordInstall);
+  // Remember across reloads: if the signed-in viewer is already in
+  // installEvents for this skill, render in the "✓ Installed" state
+  // instead of forgetting after a refresh.
+  const alreadyInstalled = useQuery(api.skills.hasInstalled, { slug });
+
+  useEffect(() => {
+    if (alreadyInstalled?.installed && state === "idle") {
+      setState("done");
+    }
+  }, [alreadyInstalled, state]);
 
   const onClick = async () => {
     if (busy) return;

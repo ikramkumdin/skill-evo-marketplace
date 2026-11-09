@@ -253,6 +253,29 @@ export const submit = mutation({
   },
 });
 
+// Has the signed-in viewer already installed this Skill? Used by the
+// Install button so it can render in its "✓ Installed" state after a
+// page reload instead of forgetting.
+export const hasInstalled = query({
+  args: { slug: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return { installed: false };
+    const skill = await ctx.db
+      .query("skills")
+      .withIndex("by_slug", (q) => q.eq("slug", args.slug))
+      .first();
+    if (!skill) return { installed: false };
+    const row = await ctx.db
+      .query("installEvents")
+      .withIndex("by_user_and_skill", (q) =>
+        q.eq("userId", userId).eq("skillId", skill._id),
+      )
+      .first();
+    return { installed: row !== null };
+  },
+});
+
 // recordInstall: credit at most one install per (user, skill). Anonymous
 // clicks are not credited at all — a signed-in user is a weak but real
 // cost to inflating a counter.
