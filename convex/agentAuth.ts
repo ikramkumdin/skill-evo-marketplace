@@ -236,16 +236,72 @@ export const rejectAgentAuth = mutation({
   },
 });
 
+// Treated as hard caps so a 5,000-char agentName or targetUserHandle
+// gets rejected at the edge instead of silently sliced in the mutation.
+const AGENT_NAME_MAX = 80;
+const TARGET_HANDLE_MAX = 80;
+
+function jsonError(message: string, status: number): Response {
+  return new Response(JSON.stringify({ error: message }), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
 // HTTP endpoint: POST /api/agent/request  → { code, approvalUrl }
 export const httpRequestAgentAuth = httpAction(async (ctx, request) => {
+  let body: unknown = {};
+  const text = await request.text();
+  if (text.length > 0) {
+    try {
+      body = JSON.parse(text);
+    } catch {
+      return jsonError("Request body is not valid JSON.", 400);
+    }
+  }
+  if (body === null || typeof body !== "object") {
+    return jsonError("Request body must be a JSON object.", 400);
+  }
+
+  const b = body as { agentName?: unknown; targetUserHandle?: unknown };
+
   let agentName = "Unnamed Agent";
+  if (b.agentName !== undefined) {
+    if (typeof b.agentName !== "string") {
+      return jsonError("agentName must be a string.", 400);
+    }
+    const trimmed = b.agentName.trim();
+    if (trimmed.length === 0) {
+      return jsonError("agentName must not be empty.", 400);
+    }
+    if (trimmed.length > AGENT_NAME_MAX) {
+      return jsonError(
+        `agentName must be ${AGENT_NAME_MAX} characters or fewer.`,
+        400,
+      );
+    }
+    agentName = trimmed;
+  }
+
   let targetUserHandle: string | undefined;
-  try {
-    const body = await request.json();
-    if (typeof body.agentName === "string") agentName = body.agentName;
-    if (typeof body.targetUserHandle === "string")
-      targetUserHandle = body.targetUserHandle;
-  } catch { /* no body */ }
+  if (b.targetUserHandle !== undefined && b.targetUserHandle !== null) {
+    if (typeof b.targetUserHandle !== "string") {
+      return jsonError("targetUserHandle must be a string.", 400);
+    }
+    const trimmed = b.targetUserHandle.trim();
+    if (trimmed.length === 0) {
+      // Treat empty string as "no target" instead of erroring out —
+      // common for callers that always send an empty string.
+      targetUserHandle = undefined;
+    } else if (trimmed.length > TARGET_HANDLE_MAX) {
+      return jsonError(
+        `targetUserHandle must be ${TARGET_HANDLE_MAX} characters or fewer.`,
+        400,
+      );
+    } else {
+      targetUserHandle = trimmed;
+    }
+  }
 
   const { code } = await ctx.runMutation(api.agentAuth.requestAgentAuth, {
     agentName,

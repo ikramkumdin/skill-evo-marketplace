@@ -78,35 +78,69 @@ function CommentItem({
 }) {
   const [showReply, setShowReply] = useState(false);
   const deleteComment = useMutation(api.comments.deleteComment);
+  const [pendingDelete, setPendingDelete] = useState<Id<"comments"> | null>(
+    null,
+  );
   const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleDelete = async () => {
-    if (deleting) return;
+  const askDelete = (commentId: Id<"comments">) => {
+    setPendingDelete(commentId);
+    setError(null);
+  };
+
+  const confirmDelete = async () => {
+    if (!pendingDelete || deleting) return;
     setDeleting(true);
+    setError(null);
     try {
-      await deleteComment({ commentId: comment._id });
+      await deleteComment({ commentId: pendingDelete });
+      setPendingDelete(null);
+    } catch (err) {
+      setError(friendlyConvexError(err, "Couldn't delete that comment."));
     } finally {
       setDeleting(false);
     }
   };
 
+  const hasReplies = replies.length > 0;
+
   return (
     <li>
       <CommentBubble
         comment={comment}
-        onDelete={comment.isOwn ? handleDelete : undefined}
-        deleting={deleting}
+        onDelete={comment.isOwn ? () => askDelete(comment._id) : undefined}
+        deleting={deleting && pendingDelete === comment._id}
       />
-      {replies.length > 0 && (
+      {pendingDelete === comment._id && (
+        <DeleteConfirm
+          hasReplies={hasReplies}
+          replyCount={replies.length}
+          busy={deleting}
+          error={error}
+          onCancel={() => { setPendingDelete(null); setError(null); }}
+          onConfirm={confirmDelete}
+        />
+      )}
+      {hasReplies && (
         <ul className="ml-8 mt-2 space-y-2 border-l-2 border-zinc-100 pl-4 dark:border-zinc-800">
           {replies.map((r) => (
             <li key={r._id}>
               <CommentBubble
                 comment={r}
-                onDelete={r.isOwn ? async () => {
-                  await deleteComment({ commentId: r._id });
-                } : undefined}
+                onDelete={r.isOwn ? () => askDelete(r._id) : undefined}
+                deleting={deleting && pendingDelete === r._id}
               />
+              {pendingDelete === r._id && (
+                <DeleteConfirm
+                  hasReplies={false}
+                  replyCount={0}
+                  busy={deleting}
+                  error={error}
+                  onCancel={() => { setPendingDelete(null); setError(null); }}
+                  onConfirm={confirmDelete}
+                />
+              )}
             </li>
           ))}
         </ul>
@@ -136,6 +170,73 @@ function CommentItem({
       </div>
     </li>
   );
+}
+
+function DeleteConfirm({
+  hasReplies,
+  replyCount,
+  busy,
+  error,
+  onCancel,
+  onConfirm,
+}: {
+  hasReplies: boolean;
+  replyCount: number;
+  busy: boolean;
+  error: string | null;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div
+      role="alertdialog"
+      aria-label="Delete this comment?"
+      className="ml-10 mt-2 w-fit max-w-md rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-900 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+    >
+      <p className="font-medium">Delete this comment?</p>
+      <p className="mt-1 opacity-90">
+        {hasReplies
+          ? `This comment has ${replyCount} ${replyCount === 1 ? "reply" : "replies"}. Deleting it hides them from view but doesn't remove them.`
+          : "This can't be undone."}
+      </p>
+      {error && <p className="mt-2 font-mono text-[11px]">{error}</p>}
+      <div className="mt-2 flex items-center gap-2">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={onConfirm}
+          className="inline-flex h-7 items-center rounded bg-red-600 px-2.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+        >
+          {busy ? "Deleting…" : "Yes, delete"}
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={onCancel}
+          className="inline-flex h-7 items-center rounded border border-red-300 px-2.5 text-xs font-medium text-red-700 hover:bg-red-100 disabled:opacity-50 dark:border-red-500/30 dark:text-red-200 dark:hover:bg-red-500/10"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Convex server errors arrive as something like
+//   "[CONVEX M(comments:addComment)] [Request ID: ...] Server Error"
+// which leaks implementation detail and scares users. Pull the
+// meaningful tail off, falling back to a provided default if we can't
+// make sense of it.
+function friendlyConvexError(err: unknown, fallback: string): string {
+  if (!(err instanceof Error)) return fallback;
+  const raw = err.message || fallback;
+  // Common Convex prefixes we want to strip.
+  const stripped = raw
+    .replace(/^\[CONVEX [^\]]+\]\s*/i, "")
+    .replace(/^\[Request ID:[^\]]+\]\s*/i, "")
+    .trim();
+  if (!stripped || /^server error\.?$/i.test(stripped)) return fallback;
+  return stripped;
 }
 
 function CommentBubble({
@@ -225,7 +326,7 @@ function CommentForm({
       setBody("");
       onSubmitted?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to post comment.");
+      setError(friendlyConvexError(err, "Couldn't post that comment."));
     } finally {
       setBusy(false);
     }

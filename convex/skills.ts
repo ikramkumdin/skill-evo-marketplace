@@ -12,6 +12,16 @@ function isPubliclyVisible(skill: Doc<"skills">): boolean {
   );
 }
 
+// Strip fields that shouldn't leak out of public queries. `seededRating` and
+// `seededRatingCount` are internal baselines used by the rating pipeline;
+// exposing them in the API tells callers which ratings were pre-filled.
+function publicSkillView(skill: Doc<"skills">) {
+  const { seededRating: _s, seededRatingCount: _sc, ...rest } = skill;
+  void _s;
+  void _sc;
+  return rest;
+}
+
 export const list = query({
   args: {
     category: v.optional(v.string()),
@@ -61,7 +71,7 @@ export const list = query({
         });
     }
 
-    return skills;
+    return skills.map(publicSkillView);
   },
 });
 
@@ -72,7 +82,10 @@ export const featured = query({
       .query("skills")
       .withIndex("by_featured", (q) => q.eq("featured", true))
       .collect();
-    return all.filter(isPubliclyVisible).sort((a, b) => b.installs - a.installs);
+    return all
+      .filter(isPubliclyVisible)
+      .sort((a, b) => b.installs - a.installs)
+      .map(publicSkillView);
   },
 });
 
@@ -102,7 +115,10 @@ export const bySlug = query({
       .filter((s) => s._id !== skill._id && isPubliclyVisible(s))
       .slice(0, 3);
 
-    return { skill, related };
+    return {
+      skill: publicSkillView(skill),
+      related: related.map(publicSkillView),
+    };
   },
 });
 
