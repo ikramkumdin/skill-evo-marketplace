@@ -100,12 +100,17 @@ export default async function SkillDetailPage(props: PageProps<"/skills/[slug]">
               <GitHubIcon />
               GitHub
             </a>
-            {skill.pricePoints ? (
-              skill.id && (
-                <PurchaseButton skillId={skill.id} pricePoints={skill.pricePoints} />
+            {/* Hide install / purchase on pending-review Skills. The
+                submitter would otherwise be able to install, rate and
+                vote on their own unapproved work. Approve first. */}
+            {skill.moderationStatus !== "pending" && (
+              skill.pricePoints ? (
+                skill.id && (
+                  <PurchaseButton skillId={skill.id} pricePoints={skill.pricePoints} />
+                )
+              ) : (
+                <InstallButton slug={skill.slug} initialInstalls={skill.installs} />
               )
-            ) : (
-              <InstallButton slug={skill.slug} initialInstalls={skill.installs} />
             )}
           </div>
           {skill.id && (
@@ -115,9 +120,26 @@ export default async function SkillDetailPage(props: PageProps<"/skills/[slug]">
               submitterId={skill.submitterId ?? null}
             />
           )}
-          {skill.id && <SkillSocialBar skillId={skill.id} size="md" />}
+          {/* Same reasoning: no social interactions until the Skill is
+              publicly visible. */}
+          {skill.id && skill.moderationStatus !== "pending" && (
+            <SkillSocialBar skillId={skill.id} size="md" />
+          )}
         </div>
       </div>
+
+      {/* Pending-review notice for the submitter. Explains why the
+          Install, rating and vote actions are missing. */}
+      {skill.moderationStatus === "pending" && (
+        <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+          <p>
+            <span className="font-medium">Pending review.</span> This Skill
+            isn&apos;t in the public catalogue yet, so Install, ratings and
+            votes are disabled until a moderator approves it. Only you can see
+            this page while it waits.
+          </p>
+        </div>
+      )}
 
       {/* Crawled-content disclaimer. Shown for any Skill auto-discovered
           from a public GitHub repo so it never reads as if the repo

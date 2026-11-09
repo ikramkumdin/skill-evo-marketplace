@@ -137,6 +137,7 @@ export default async function UserProfilePage(props: PageProps<"/users/[handle]"
                       rating: s.rating,
                       ratingCount: s.ratingCount,
                       featured: s.featured,
+                      moderationStatus: s.moderationStatus,
                       author: { handle: s.submitterHandle, avatar: s.submitterAvatar },
                       createdAt: new Date(s._creationTime).toISOString().slice(0, 10),
                       updatedAt: new Date(s._creationTime).toISOString().slice(0, 10),

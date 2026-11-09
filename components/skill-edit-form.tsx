@@ -8,6 +8,29 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { CATEGORIES } from "@/lib/categories";
 
+// Same shape as the one in publish-form.tsx. `ConvexError` payloads
+// land on `err.data`; legacy `throw new Error` sites still get their
+// stripped message. If both routes fail, show the caller's fallback.
+function friendlyConvexError(err: unknown, fallback: string): string {
+  if (err && typeof err === "object" && "data" in err) {
+    const data = (err as { data: unknown }).data;
+    if (typeof data === "string" && data.trim().length > 0) return data;
+    if (data && typeof data === "object" && "message" in data) {
+      const msg = (data as { message?: unknown }).message;
+      if (typeof msg === "string" && msg.trim().length > 0) return msg;
+    }
+  }
+  if (!(err instanceof Error)) return fallback;
+  const raw = err.message || fallback;
+  const stripped = raw
+    .replace(/^\[CONVEX [^\]]+\]\s*/i, "")
+    .replace(/^\[Request ID:[^\]]+\]\s*/i, "")
+    .replace(/\s*Called by client\.?\s*$/i, "")
+    .trim();
+  if (!stripped || /^server error\.?$/i.test(stripped)) return fallback;
+  return stripped;
+}
+
 interface EditableSkill {
   id: string;
   slug: string;
@@ -81,7 +104,12 @@ export function SkillEditForm({ skill }: { skill: EditableSkill }) {
       router.push(`/skills/${skill.slug}`);
       router.refresh();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Update failed.");
+      setError(
+        friendlyConvexError(
+          e,
+          "Couldn't save those changes. Check the fields and try again.",
+        ),
+      );
       setBusy(false);
     }
   };
