@@ -435,6 +435,94 @@ export const deleteSkill = mutation({
   },
 });
 
+// Admin cleanup helpers. Internal-only so they can only be called by
+// trusted callers (Convex CLI or scheduled tasks).
+
+// Delete one Skill by its slug. Convenient for cleaning up test
+// listings that QA (or an earlier crawl) left behind without having
+// to look up the Convex _id.
+export const deleteBySlug = internalMutation({
+  args: { slug: v.string() },
+  handler: async (ctx, args) => {
+    const skill = await ctx.db
+      .query("skills")
+      .withIndex("by_slug", (q) => q.eq("slug", args.slug))
+      .first();
+    if (!skill) return { deleted: 0 };
+
+    // Mirror the cascade in deleteSkill so we don't leave orphans.
+    const tables = [
+      "installEvents",
+      "favorites",
+      "votes",
+      "ratings",
+      "comments",
+      "skillLabels",
+      "purchases",
+    ] as const;
+    for (const t of tables) {
+      const rows = await ctx.db
+        .query(t)
+        .withIndex("by_skill", (q) => q.eq("skillId", skill._id))
+        .collect();
+      for (const r of rows) await ctx.db.delete(r._id);
+    }
+    await ctx.db.delete(skill._id);
+    return { deleted: 1, id: skill._id, slug: skill.slug };
+  },
+});
+
+// Delete every Skill whose name starts with the given prefix. Intended
+// for bulk cleanup of rows named like "[QA TEST] NNNN…". Case-sensitive.
+// Dry-run by default so we can see what would be deleted before
+// committing.
+export const deleteByNamePrefix = internalMutation({
+  args: { prefix: v.string(), dryRun: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
+    const dry = args.dryRun ?? true;
+    const all = await ctx.db.query("skills").collect();
+    const match = all.filter((s) => s.name.startsWith(args.prefix));
+    const names = match.map((s) => ({ slug: s.slug, name: s.name }));
+    if (dry) return { deleted: 0, dryRun: true, wouldDelete: names };
+
+    for (const skill of match) {
+      const tables = [
+        "installEvents",
+        "favorites",
+        "votes",
+        "ratings",
+        "comments",
+        "skillLabels",
+        "purchases",
+      ] as const;
+      for (const t of tables) {
+        const rows = await ctx.db
+          .query(t)
+          .withIndex("by_skill", (q) => q.eq("skillId", skill._id))
+          .collect();
+        for (const r of rows) await ctx.db.delete(r._id);
+      }
+      await ctx.db.delete(skill._id);
+    }
+    return { deleted: match.length, dryRun: false, removed: names };
+  },
+});
+
+// One-shot migration helper to renumber the handle on crawled rows
+// that pre-date the "github-anthropics" rename. Idempotent — safe to
+// run multiple times; later runs delete nothing.
+export const renameSubmitterHandle = internalMutation({
+  args: { from: v.string(), to: v.string() },
+  handler: async (ctx, args) => {
+    const all = await ctx.db.query("skills").collect();
+    const match = all.filter((s) => s.submitterHandle === args.from);
+    for (const s of match) {
+      await ctx.db.patch(s._id, { submitterHandle: args.to });
+    }
+    return { renamed: match.length };
+  },
+});
+
 // Admin-only moderation. Internal — callable from `npx convex run` or
 // from a future /admin/moderation UI. Approving a pending skill makes
 // it visible and lets it count toward the submitter's reputation.

@@ -117,11 +117,14 @@ async function fetchText(url: string): Promise<string> {
 export const crawlAnthropicSkills = action({
   args: {},
   handler: async (ctx): Promise<{ inserted: number; skipped: number; total: number }> => {
+    // Use a handle that makes clear this is community-mirrored content
+    // from a public GitHub repo, not an official Anthropic account on
+    // this marketplace. Prevents listings from looking endorsed.
     return await ctx.runAction(api.crawl.crawlGitHubRepo, {
       owner: ANTHROPIC_OWNER,
       repo: ANTHROPIC_REPO,
       skillsPath: ANTHROPIC_SKILLS_PATH,
-      submitterHandle: "anthropics",
+      submitterHandle: "github-anthropics",
     });
   },
 });
