@@ -36,9 +36,17 @@ function ConnectedAuthButton() {
   const [busy, setBusy] = useState(false);
 
   if (isLoading) {
+    // Skeleton button so the header doesn't flash "..." then snap to
+    // "@handle" / "Sign in". Width is picked to match the typical
+    // signed-in pill so the surrounding layout doesn't shift once we
+    // know the state.
     return (
-      <span className="hidden sm:inline-flex h-8 items-center rounded-full border border-zinc-200 px-3 text-xs text-zinc-400 dark:border-zinc-800 dark:text-zinc-500">
-        ...
+      <span
+        aria-busy="true"
+        aria-label="Checking sign-in state"
+        className="hidden sm:inline-flex h-8 w-24 items-center rounded-full bg-zinc-100 dark:bg-zinc-900"
+      >
+        <span className="block h-2 w-16 rounded-full bg-zinc-200 dark:bg-zinc-800 ml-3 animate-pulse" />
       </span>
     );
   }

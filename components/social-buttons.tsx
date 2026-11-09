@@ -70,11 +70,16 @@ function Connected({
     }
   };
 
+  // While the Convex query is still resolving, `social` is undefined.
+  // Render "—" instead of 0 so a 3s "0 stars, 0 upvotes" flash doesn't
+  // make a popular Skill look empty. Once data lands the real counts
+  // snap in.
+  const loaded = social !== undefined;
   const fav = social?.userFavorited ?? false;
   const myVote = social?.userVote ?? null;
-  const favCount = social?.favoritesCount ?? 0;
-  const upCount = social?.upvotes ?? 0;
-  const downCount = social?.downvotes ?? 0;
+  const favCount = loaded ? String(social.favoritesCount) : "—";
+  const upCount = loaded ? String(social.upvotes) : "—";
+  const downCount = loaded ? String(social.downvotes) : "—";
 
   const cls =
     size === "sm"
@@ -103,7 +108,7 @@ function Connected({
         <span className={`text-sm leading-none ${fav ? "" : ""}`}>
           {fav ? "★" : "☆"}
         </span>
-        <span className="tabular-nums">{favCount}</span>
+        <span className={`tabular-nums ${loaded ? "" : "text-zinc-300 dark:text-zinc-600"}`}>{favCount}</span>
       </button>
       <button
         type="button"
@@ -118,7 +123,7 @@ function Connected({
         }`}
       >
         <span className="leading-none">▲</span>
-        <span className="tabular-nums">{upCount}</span>
+        <span className={`tabular-nums ${loaded ? "" : "text-zinc-300 dark:text-zinc-600"}`}>{upCount}</span>
       </button>
       <button
         type="button"
@@ -133,7 +138,7 @@ function Connected({
         }`}
       >
         <span className="leading-none">▼</span>
-        <span className="tabular-nums">{downCount}</span>
+        <span className={`tabular-nums ${loaded ? "" : "text-zinc-300 dark:text-zinc-600"}`}>{downCount}</span>
       </button>
     </div>
   );

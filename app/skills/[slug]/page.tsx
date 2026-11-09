@@ -119,6 +119,29 @@ export default async function SkillDetailPage(props: PageProps<"/skills/[slug]">
         </div>
       </div>
 
+      {/* Crawled-content disclaimer. Shown for any Skill auto-discovered
+          from a public GitHub repo so it never reads as if the repo
+          owner endorsed this marketplace listing. */}
+      {skill.source === "crawled" && (
+        <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+          <p>
+            <span className="font-medium">Auto-discovered.</span> This Skill
+            was mirrored from the public repository at{" "}
+            <a
+              href={skill.githubUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:no-underline"
+            >
+              {skill.githubUrl.replace(/^https?:\/\//, "")}
+            </a>
+            . It&apos;s shown here for discovery; the listing isn&apos;t
+            endorsed by the repository owner, and any trademarks remain
+            with their owners.
+          </p>
+        </div>
+      )}
+
       {/* Stats strip */}
       <div className="grid grid-cols-3 gap-px rounded-xl bg-zinc-200 p-px mb-8 overflow-hidden dark:bg-zinc-800">
         <Stat label="Installs" value={skill.installs.toLocaleString()} />
