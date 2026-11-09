@@ -56,19 +56,15 @@ function ConnectedPublishForm() {
     setError(null);
     setBusy(true);
     const fd = new FormData(e.currentTarget);
-    const githubUrl = String(fd.get("githubUrl") ?? "").trim();
-    const name = String(fd.get("name") ?? "").trim();
-    const slug = name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
     const rawPrice = parseInt(String(fd.get("pricePoints") ?? "0"), 10);
+    // Note: installCommand is NOT sent — the server validates the GitHub
+    // URL and constructs the install command itself. Any value we sent
+    // would be ignored.
     const payload = {
-      name,
+      name: String(fd.get("name") ?? "").trim(),
       tagline: String(fd.get("tagline") ?? "").trim(),
       description: String(fd.get("description") ?? "").trim(),
-      githubUrl,
-      installCommand: `git clone ${githubUrl} ~/.claude/skills/${slug}`,
+      githubUrl: String(fd.get("githubUrl") ?? "").trim(),
       category: String(fd.get("category") ?? ""),
       tags: String(fd.get("tags") ?? "")
         .split(",")
