@@ -228,12 +228,20 @@ function DeleteConfirm({
 // meaningful tail off, falling back to a provided default if we can't
 // make sense of it.
 function friendlyConvexError(err: unknown, fallback: string): string {
+  // Server now throws ConvexError for anything a user can see, so the
+  // real message arrives in err.data. Prefer it; fall back to stripping
+  // the `[CONVEX M(…)]` prefix from err.message for any legacy throws;
+  // final fallback is the caller-supplied default.
+  if (err && typeof err === "object" && "data" in err) {
+    const data = (err as { data: unknown }).data;
+    if (typeof data === "string" && data.trim().length > 0) return data;
+    if (data && typeof data === "object" && "message" in data) {
+      const msg = (data as { message?: unknown }).message;
+      if (typeof msg === "string" && msg.trim().length > 0) return msg;
+    }
+  }
   if (!(err instanceof Error)) return fallback;
   const raw = err.message || fallback;
-  // Common Convex prefixes we want to strip. We also drop the trailing
-  // "Called by client" pseudo-tag that leaks past the main prefix when
-  // the server throws a bare error, so a too-long comment doesn't read
-  // as "Server Error Called by client".
   const stripped = raw
     .replace(/^\[CONVEX [^\]]+\]\s*/i, "")
     .replace(/^\[Request ID:[^\]]+\]\s*/i, "")

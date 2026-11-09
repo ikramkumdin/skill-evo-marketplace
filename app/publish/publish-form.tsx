@@ -7,12 +7,20 @@ import { api } from "@/convex/_generated/api";
 import { CATEGORIES } from "@/lib/categories";
 import { SignInButtons } from "@/components/sign-in-buttons";
 
-// Mirrors the server strip pattern in components/comment-thread.tsx.
-// Convex errors arrive like "[CONVEX M(skills:submit)] [Request ID: …]
-// Server Error. Called by client" — strip the framework prefix, and if
-// what remains is the generic "Server Error" fall back to the caller's
-// friendly default so the user sees what to do, not internals.
+// Server throws `new ConvexError(msg)` so the client gets a real
+// message in `err.data` instead of a sanitised "Server Error". Prefer
+// that payload; fall back to stripping the `[CONVEX M(…)]` prefix out
+// of `err.message` for any legacy `throw new Error` sites we haven't
+// migrated yet; final fallback is the caller-supplied default.
 function friendlyConvexError(err: unknown, fallback: string): string {
+  if (err && typeof err === "object" && "data" in err) {
+    const data = (err as { data: unknown }).data;
+    if (typeof data === "string" && data.trim().length > 0) return data;
+    if (data && typeof data === "object" && "message" in data) {
+      const msg = (data as { message?: unknown }).message;
+      if (typeof msg === "string" && msg.trim().length > 0) return msg;
+    }
+  }
   if (!(err instanceof Error)) return fallback;
   const raw = err.message || fallback;
   const stripped = raw

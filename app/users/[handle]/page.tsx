@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fetchQuery } from "convex/nextjs";
+import { convexAuthNextjsToken } from "@convex-dev/auth/nextjs/server";
 import { api } from "@/convex/_generated/api";
 import { SkillCard } from "@/components/skill-card";
 import { isConvexConfigured } from "@/lib/data";
@@ -28,7 +29,21 @@ export default async function UserProfilePage(props: PageProps<"/users/[handle]"
   }
 
   type ProfileResult = Awaited<ReturnType<typeof fetchQuery<typeof api.profile.getUserProfile>>>;
-  const profile = (await fetchQuery(api.profile.getUserProfile, { handle })) as ProfileResult;
+  // Pass the signed-in viewer's token so the profile query can tell
+  // when the viewer IS this profile's owner. Without it, the submitter
+  // would see their own profile as "This profile is empty" because
+  // pending skills get filtered out as if an anonymous visitor.
+  let token: string | undefined;
+  try {
+    token = (await convexAuthNextjsToken()) ?? undefined;
+  } catch {
+    token = undefined;
+  }
+  const profile = (await fetchQuery(
+    api.profile.getUserProfile,
+    { handle },
+    { token },
+  )) as ProfileResult;
 
   if (!profile || !profile.userId) {
     notFound();

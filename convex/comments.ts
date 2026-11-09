@@ -1,6 +1,12 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+
+// See comment in skills.ts — ConvexError messages reach the client
+// verbatim, while plain `Error` is sanitised to "Server Error".
+function clientError(msg: string): never {
+  throw new ConvexError(msg);
+}
 
 export const listComments = query({
   args: { skillId: v.id("skills") },
@@ -55,19 +61,19 @@ export const addComment = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Sign in to comment.");
+    if (!userId) clientError("Sign in to comment.");
 
     const body = args.body.trim();
-    if (!body) throw new Error("Comment cannot be empty.");
-    if (body.length > 2000) throw new Error("Comment too long (max 2000 chars).");
+    if (!body) clientError("Comment cannot be empty.");
+    if (body.length > 2000) clientError("Comment too long. Max 2000 characters.");
 
     if (args.parentId) {
       const parent = await ctx.db.get(args.parentId);
       if (!parent || parent.skillId !== args.skillId) {
-        throw new Error("Invalid parent comment.");
+        clientError("Invalid parent comment.");
       }
       // Only one level of nesting allowed
-      if (parent.parentId) throw new Error("Cannot nest replies more than one level.");
+      if (parent.parentId) clientError("Replies can only be one level deep.");
     }
 
     const id = await ctx.db.insert("comments", {
@@ -84,11 +90,11 @@ export const deleteComment = mutation({
   args: { commentId: v.id("comments") },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Sign in to delete a comment.");
+    if (!userId) clientError("Sign in to delete a comment.");
 
     const comment = await ctx.db.get(args.commentId);
-    if (!comment) throw new Error("Comment not found.");
-    if (comment.userId !== userId) throw new Error("Cannot delete someone else's comment.");
+    if (!comment) clientError("Comment not found.");
+    if (comment.userId !== userId) clientError("You can only delete your own comments.");
 
     // Delete all replies first
     const replies = await ctx.db
