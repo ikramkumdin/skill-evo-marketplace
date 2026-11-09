@@ -10,6 +10,7 @@ import { SkillLabelPicker } from "@/components/skill-label-picker";
 import { PurchaseButton } from "@/components/purchase-button";
 import { LiveRatingStat } from "@/components/live-rating-stat";
 import { LiveFavoritesStat } from "@/components/live-favorites-stat";
+import { SkillOwnerControls } from "@/components/skill-owner-controls";
 
 export const dynamic = "force-dynamic";
 
@@ -67,6 +68,14 @@ export default async function SkillDetailPage(props: PageProps<"/skills/[slug]">
                   Auto-discovered
                 </span>
               )}
+              {skill.moderationStatus === "pending" && (
+                <span
+                  title="Waiting for moderator review. Only you can see this Skill until it's approved."
+                  className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20"
+                >
+                  Pending review
+                </span>
+              )}
             </div>
             <p className="text-zinc-600 dark:text-zinc-400">{skill.tagline}</p>
             <p className="mt-2 text-xs text-zinc-500">
@@ -99,6 +108,13 @@ export default async function SkillDetailPage(props: PageProps<"/skills/[slug]">
               <InstallButton slug={skill.slug} initialInstalls={skill.installs} />
             )}
           </div>
+          {skill.id && (
+            <SkillOwnerControls
+              skillId={skill.id}
+              slug={skill.slug}
+              submitterId={skill.submitterId ?? null}
+            />
+          )}
           {skill.id && <SkillSocialBar skillId={skill.id} size="md" />}
         </div>
       </div>
