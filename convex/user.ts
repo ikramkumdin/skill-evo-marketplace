@@ -19,7 +19,11 @@ export const me = query({
       (s) => s.submitterId === userId,
     );
     const totalInstalls = skills.reduce((acc, s) => acc + s.installs, 0);
-    const reputation = totalInstalls + skills.length * 50;
+    const approvedForRep = skills.filter(
+      (s) =>
+        s.moderationStatus === undefined || s.moderationStatus === "approved",
+    );
+    const reputation = totalInstalls + approvedForRep.length * 50;
 
     return {
       userId,

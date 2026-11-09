@@ -48,7 +48,14 @@ export const getUserProfile = query({
     }
 
     const totalInstalls = skills.reduce((acc, s) => acc + s.installs, 0);
-    const reputation = totalInstalls + skills.length * 50;
+    // Only approved (or legacy) skills count toward reputation. Pending
+    // and rejected skills contribute nothing, so submitting a batch of
+    // spam listings no longer immediately inflates the score.
+    const approvedForRep = skills.filter(
+      (s) =>
+        s.moderationStatus === undefined || s.moderationStatus === "approved",
+    );
+    const reputation = totalInstalls + approvedForRep.length * 50;
 
     // Labels (public)
     const labeledSkills: Array<{ label: LabelValue; skill: SkillDoc }> = [];
@@ -107,7 +114,11 @@ export const mySummary = query({
     const skills = allSkills.filter((s) => s.submitterId === userId);
 
     const totalInstalls = skills.reduce((acc, s) => acc + s.installs, 0);
-    const reputation = totalInstalls + skills.length * 50;
+    const approvedForRep = skills.filter(
+      (s) =>
+        s.moderationStatus === undefined || s.moderationStatus === "approved",
+    );
+    const reputation = totalInstalls + approvedForRep.length * 50;
 
     return {
       userId,

@@ -26,12 +26,22 @@ export default defineSchema({
     submitterAvatar: v.string(),
     pricePoints: v.optional(v.number()), // undefined = free
     source: v.optional(v.union(v.literal("submitted"), v.literal("crawled"))),
+    // Moderation gate. undefined = legacy row, treated as approved so we
+    // don't retro-hide the seed catalog. New submits land as "pending".
+    moderationStatus: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("approved"),
+        v.literal("rejected"),
+      ),
+    ),
   })
     .index("by_slug", ["slug"])
     .index("by_category", ["category"])
     .index("by_featured", ["featured"])
     .index("by_submitter", ["submitterId"])
     .index("by_submitter_handle", ["submitterHandle"])
+    .index("by_moderation_status", ["moderationStatus"])
     .searchIndex("search_skills", {
       searchField: "name",
       filterFields: ["category"],
@@ -40,7 +50,11 @@ export default defineSchema({
   installEvents: defineTable({
     skillId: v.id("skills"),
     userId: v.optional(v.id("users")),
-  }).index("by_skill", ["skillId"]),
+  })
+    .index("by_skill", ["skillId"])
+    // Used by recordInstall to enforce one credited install per
+    // (user, skill) pair. Anonymous installs are not credited.
+    .index("by_user_and_skill", ["userId", "skillId"]),
 
   favorites: defineTable({
     userId: v.id("users"),

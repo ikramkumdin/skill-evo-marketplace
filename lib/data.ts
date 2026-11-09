@@ -15,6 +15,7 @@ export const isConvexConfigured = Boolean(convexUrl);
 
 export type DisplaySkill = {
   id?: string; // Convex doc _id when sourced from Convex; absent in mock mode
+  submitterId?: string | null; // Convex users._id of the submitter, when present
   slug: string;
   name: string;
   tagline: string;
@@ -30,6 +31,7 @@ export type DisplaySkill = {
   featured?: boolean;
   pricePoints?: number; // undefined = free
   source?: "submitted" | "crawled";
+  moderationStatus?: "pending" | "approved" | "rejected";
   author: { handle: string; avatar: string };
   createdAt: string;
   updatedAt: string;
@@ -74,14 +76,17 @@ type ConvexSkillDoc = {
   featured?: boolean;
   pricePoints?: number;
   source?: "submitted" | "crawled";
+  submitterId?: string | null;
   submitterHandle: string;
   submitterAvatar: string;
+  moderationStatus?: "pending" | "approved" | "rejected";
 };
 
 function convexToDisplay(s: ConvexSkillDoc): DisplaySkill {
   const date = new Date(s._creationTime).toISOString().slice(0, 10);
   return {
     id: s._id,
+    submitterId: s.submitterId ?? null,
     slug: s.slug,
     name: s.name,
     tagline: s.tagline,
@@ -97,6 +102,7 @@ function convexToDisplay(s: ConvexSkillDoc): DisplaySkill {
     featured: s.featured,
     pricePoints: s.pricePoints,
     source: s.source,
+    moderationStatus: s.moderationStatus,
     author: { handle: s.submitterHandle, avatar: s.submitterAvatar },
     createdAt: date,
     updatedAt: date,
